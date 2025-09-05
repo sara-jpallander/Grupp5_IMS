@@ -39,6 +39,17 @@ app.post("/api/contacts", async (req, res) => {
 
 });
 
+//GET 
+
+app.get("/api/contacts", async (req, res) => {
+	try{
+		const contacts = await Contact.find();
+		res.status(200).json({message:"All Contacts", contacts});
+	} catch (error) {
+		res.status(500).json({ error});
+	}
+});
+
 async function connectDB() {
 	if (!process.env.MONGODB_URI) throw new Error("Missing MONGODB_URI");
 	await mongoose.connect(process.env.MONGODB_URI, {
