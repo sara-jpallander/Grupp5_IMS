@@ -1,35 +1,30 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { Link, Route } from "wouter";
+import Home from "./pages/Home";
+import "./app.css";
+import { Button } from "./components/ui/button";
+import Manufacturers from "./pages/Manufacturers";
+import Products from "./pages/Products";
 
 function App() {
-  const [count, setCount] = useState(0)
-
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div className="w-full min-h-full flex flex-col">
+      <header className="bg-gray-100 border-gray-200 border-b-1 p-3 sticky top-0">
+        <nav>
+          <ul className="flex gap-4">
+          <li><Link href="/"><Button variant="link">Home</Button></Link></li>
+          <li><Link href="/products"><Button variant="link">Products</Button></Link></li>
+          <li><Link href="/manufacturers"><Button variant="link">Manufacturers</Button></Link></li>
+          </ul>
+        </nav>
+      </header>
+      <main className="flex-1">
+        <Route path="/" component={Home} />
+        <Route path="/products" component={Products} />
+        <Route path="/manufacturers" component={Manufacturers} />
+      </main>
+      <footer className="bg-gray-100 border-gray-200 border-t-1 text-center p-4">Footer</footer>
+    </div>
+  );
 }
 
-export default App
+export default App;
