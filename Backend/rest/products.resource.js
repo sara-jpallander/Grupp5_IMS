@@ -10,6 +10,7 @@ router.get(
 );
 router.get("/total-stock-value", getTotalStockValue);
 router.get("/low-stock", getLowStock);
+router.get("/critical-stock", getCriticalStock);
 
 router.get("/", getAllProducts);
 router.post("/", createProduct);
@@ -188,6 +189,65 @@ async function getLowStock(req, res) {
         error: error.message,
       });
   }
+}
+
+async function getCriticalStock(req, res) {
+      try {
+        const result = await Product.aggregate([
+
+            {
+                $lookup: {
+                    from: "manufacturers",
+                    localField: "manufacturer",
+                    foreignField: "_id",
+                    as: "manufacturerInfo",
+                },
+            },
+
+            {$unwind: "$manufacturerInfo"},
+
+            { $match: { amountInStock: { $lt: 40 }} },
+
+            {
+                $lookup: {
+                    from: "contacts",
+                    localField: "manufacturerInfo.contact",
+                    foreignField: "_id",
+                    as: "contactInfo",
+                },
+            },
+
+            {$unwind: "$contactInfo"},
+
+            {$project: {
+                _id: 0,
+                productID: "$_id",
+                name: 1,
+                sku: 1,
+                price: 1,
+                amountInStock: 1,
+                category: 1,
+
+                manufacturer: "$manufacturerInfo.name",
+                manufacturerContactName: "$contactInfo.name",
+                phone: "$contactInfo.phone",
+                email: "$contactInfo.email"
+            }}
+        ]);
+
+        /* Hämta en lista över produkter med färre än 5 enheter i lager, 
+        inklusive tillverkarens namn, 
+        kontaktens namn, 
+        telefonnummer och e-post */
+
+        res.status(200).json({ data: { criticalStock: result } });
+
+    } catch (error) {
+        res.status(500).json({
+            message: "Internal server error. Failed to retrieve critical stock.",
+            error: error.message,
+        });
+    }
 }
 
 export default router;
