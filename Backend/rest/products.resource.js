@@ -9,6 +9,7 @@ router.get(
   getTotalStockValueByManufacturer
 );
 router.get("/total-stock-value", getTotalStockValue);
+router.get("/low-stock", getLowStock);
 
 router.get("/", getAllProducts);
 router.post("/", createProduct);
@@ -167,6 +168,23 @@ async function getTotalStockValueByManufacturer(req, res) {
       .json({
         message:
           "Internal server error. Failed to retrieve stock value by manufacturer.",
+        error: error.message,
+      });
+  }
+}
+
+async function getLowStock(req, res) {
+  try {
+    const result = await Product.aggregate([
+      { $match: { amountInStock: { $lt: 50 }} },
+    ]);
+
+    res.status(200).json({ data: { lowStock: result } });
+  } catch (error) {
+    res.status(500)
+      .json({
+        message:
+          "Internal server error. Failed to retrieve low stock.",
         error: error.message,
       });
   }
