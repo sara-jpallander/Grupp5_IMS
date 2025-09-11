@@ -10,6 +10,7 @@ router.get(
 );
 router.get("/total-stock-value", getTotalStockValue);
 router.get("/low-stock", getLowStock);
+router.get("/critical-stock", getCriticalStock);
 
 router.get("/", getAllProducts);
 router.post("/", createProduct);
@@ -161,7 +162,7 @@ async function getTotalStockValueByManufacturer(req, res) {
       },
     ]);
 
-    res.status(200).json({ data: { totalStockValueByManufacturer: result } });
+    res.status(200).json({ data: result });
   } catch (error) {
     res
       .status(500)
@@ -176,15 +177,64 @@ async function getTotalStockValueByManufacturer(req, res) {
 async function getLowStock(req, res) {
   try {
     const result = await Product.aggregate([
-      { $match: { amountInStock: { $lt: 50 }} },
+      { $match: { amountInStock: { $lt: 10 }} },
     ]);
 
-    res.status(200).json({ data: { lowStock: result } });
+    res.status(200).json({ data: result });
   } catch (error) {
     res.status(500)
       .json({
         message:
           "Internal server error. Failed to retrieve low stock.",
+        error: error.message,
+      });
+  }
+}
+
+async function getCriticalStock(req, res) {
+  try {
+    const result = await Product.aggregate([
+      { $match: { amountInStock: { $lt: 5 }} },
+      {
+        $lookup: {
+          from: "manufacturers",
+          localField: "manufacturer",
+          foreignField: "_id",
+          as: "manufacturerInfo",
+        },
+      },
+      { $unwind: "$manufacturerInfo" },
+      {
+        $lookup: {
+          from: "contacts",
+          localField: "manufacturerInfo.contact",
+          foreignField: "_id",
+          as: "contactInfo",
+        },
+      },
+      { $unwind: "$contactInfo" },
+      {
+        $project: {
+          name: "$name",
+          sku: "$sku",
+          price: "$price",
+          amountInStock: "$amountInStock",
+          manufacturer: "$manufacturerInfo.name",
+          contact: {
+            name: "$contactInfo.name",
+            phone: "$contactInfo.phone",
+            email: "$contactInfo.email"
+          }
+        },
+      },
+    ]);
+
+    res.status(200).json({ data: result });
+  } catch (error) {
+    res.status(500)
+      .json({
+        message:
+          "Internal server error. Failed to retrieve critical stock.",
         error: error.message,
       });
   }

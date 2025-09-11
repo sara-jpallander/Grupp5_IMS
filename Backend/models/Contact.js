@@ -8,8 +8,4 @@ const ContactSchema = new mongoose.Schema({
     { collection: "contacts" }
 );
 
-// name
-// email
-// phone
-
 export default mongoose.model("Contact", ContactSchema);
