@@ -9,10 +9,27 @@ import Contact from "../models/Contact.js";
 dotenv.config();
 const MONGODB_URI = process.env.MONGODB_URI;
 
-const CONTACTS_COUNT = 5;
-const PRODUCTS_COUNT = 5;
+const CONTACTS_COUNT_RANGE = [5, 5];
+const PRODUCTS_COUNT_RANGE = [1, 5];
+const PRODUCTS_PRICE_RANGE = [10, 2000];
+const PRODUCTS_STOCK_RANGE = [0, 100];
 
-const rand = (arr) => arr[Math.floor(Math.random() * arr.length)];
+const LOW_STOCK = 10;
+const CRITICAL_STOCK = 5;
+
+function randomizeItem(array) {
+  return array[Math.floor(Math.random() * array.length)];
+}
+
+function randomizeInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+function weightedrandomizeInt(min, max, skew = 2) {
+  // Skew > 1 favors lower numbers, e.g. 2 = quadratic, 3 = cubic
+  const rand = Math.pow(Math.random(), skew);
+  return Math.floor(rand * (max - min + 1)) + min;
+}
 
 async function main() {
   await mongoose.connect(MONGODB_URI, {
@@ -28,8 +45,10 @@ async function main() {
   ]);
 
   // Skapa kontakter
-  const contacts = Array.from({ length: CONTACTS_COUNT }).map(() => {
-    const genName = faker.person.fullName();
+  const contacts = Array.from({
+    length: randomizeInt(CONTACTS_COUNT_RANGE[0], CONTACTS_COUNT_RANGE[1]),
+  }).map(() => {
+    const genName = faker.person.fullName().replace(".", "");
     const [firstName, lastName] = genName.split(" ");
     const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@mail.com`;
 
@@ -43,6 +62,7 @@ async function main() {
 
   let manufacturers = [];
 
+  // Skapa ett företag per kontakt
   for (const contact of contactDocs) {
     const genName = faker.company.name();
     const genWebsiteDomain = genName.split(" ").join("").replace(",", "");
@@ -63,37 +83,54 @@ async function main() {
     ordered: false,
   });
 
-  const products = Array.from({ length: PRODUCTS_COUNT }).map(() => {
-    const manufacturer = rand(manufacturers);
+  let allProducts = [];
 
-      // Gör klart alla fält
+  // Skapa x antal produkter per företag
+  for (const manufacturer of manufacturers) {
+    const productsCount = randomizeInt(
+      PRODUCTS_COUNT_RANGE[0],
+      PRODUCTS_COUNT_RANGE[1]
+    );
+
+    const products = Array.from({ length: productsCount }).map(() => {
+      // SKU logik
+      const sku1 = manufacturer.name.slice(0, 3).toUpperCase();
+      const sku2 = faker.string.alphanumeric({ length: 8 }).toUpperCase();
+
       return {
         name: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
         category: faker.commerce.department(),
-        manufacturer: manufacturer._id
-      }
-  });
+        // category: randomizeItem([""]),
+        manufacturer: manufacturer._id,
+        sku: `${sku1}-${sku2}`,
+        price: randomizeInt(PRODUCTS_PRICE_RANGE[0], PRODUCTS_PRICE_RANGE[1]),
+        amountInStock: weightedrandomizeInt(
+          PRODUCTS_STOCK_RANGE[0],
+          PRODUCTS_STOCK_RANGE[1],
+          2
+        ),
+      };
+    });
 
-  const dbProducts = await Product.insertMany(products, { ordered: false });
+    allProducts = [...allProducts, ...products];
+  }
 
-  console.log(dbProducts)
+  // Se till att det garanterat finns produkter med LOW_STOCK och CRITICAL_STOCK
+  if (allProducts.length >= 2) {
+    const lowStockIndex = randomizeInt(0, allProducts.length - 1);
+    let criticalStockIndex = randomizeInt(0, allProducts.length - 1);
+    // Se till att inte plocka samma produkt
+    while (criticalStockIndex === lowStockIndex) {
+      criticalStockIndex = randomizeInt(0, allProducts.length - 1);
+    }
+    allProducts[lowStockIndex].amountInStock = LOW_STOCK;
+    allProducts[criticalStockIndex].amountInStock = CRITICAL_STOCK;
+  }
 
+  const dbProducts = await Product.insertMany(allProducts, { ordered: false });
 
-  // for (const manufacturer of manufacturers) {
-  //   products = Array.from({ length: PRODUCT_PER_MANUFACTURER_COUNT }).map(() => {
-  //     return {
-  //       name: faker.commerce.productName(),
-  //       description: faker.commerce.productDescription(),
-  //       category: faker.commerce.department(),
-  //       manufacturer: manufacturer._id
-  //     }
-  //   });
-  // }
-  // console.log(manufacturers)
-  // console.log(products)
-
-  // await Product.insertMany(products, { ordered: false });
+  console.log(dbProducts);
 
   console.log("Database has been seeded!");
   await mongoose.disconnect();
