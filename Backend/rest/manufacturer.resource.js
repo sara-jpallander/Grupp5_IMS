@@ -1,5 +1,6 @@
 import express from "express";
 import Manufacturer from "../models/Manufacturer.js";
+import Contact from "../models/Contact.js"
 
 const router = express.Router();
 
@@ -13,7 +14,25 @@ router.delete("/:id", deleteManufacturer);
 // CREATE
 async function createManufacturer(req, res) {
 	try {
-		const manufacturer = await Manufacturer.create(req.body);
+
+        /* skapa contact - spara id - koppla till manuf. i samband med att den skapas */
+        const contact = await Contact.create(req.body.contact);
+		const manufacturer = await Manufacturer.create({...req.body, contact: contact._id});
+
+        /*
+        {
+            "name": "IKEA",
+            "country": "Sweden",
+            "website": "ikea.se",
+            "description": "Hej!",
+            "address": "Sverigevägen 123",
+            "contact": {
+                "name": "Ingvar",
+                "email": "ingvar@ikea.se",
+                "phone": "+1234567890"
+            },
+        }
+        */
 
     res.status(201).json({ message: "Manufacturer created: ", data: manufacturer });
 	} catch (error) {

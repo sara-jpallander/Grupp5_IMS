@@ -44,7 +44,7 @@ async function getAllProducts(req, res) {
 //GET BY ID
 async function getProduct(req, res) {
   try {
-    const product = await Contact.findById(req.params.id);
+    const product = await Product.findById(req.params.id);
 
     if (!product)
       return res.status(404).json({ error: "Product could not be found." });
@@ -60,7 +60,7 @@ async function getProduct(req, res) {
 //UPDATE BY ID
 async function updateProduct(req, res) {
   try {
-    const product = await Contact.findByIdAndUpdate(req.params.id, req.body, {
+    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
 
@@ -78,7 +78,7 @@ async function updateProduct(req, res) {
 //DELETE BY ID
 async function deleteProduct(req, res) {
   try {
-    const deleteProductById = await Contact.findByIdAndDelete(req.params.id);
+    const deleteProductById = await Product.findByIdAndDelete(req.params.id);
 
     if (!deleteProductById) {
       return res.status(404).json({ error: "Contact not found" });
