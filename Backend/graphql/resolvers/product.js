@@ -1,3 +1,4 @@
+import { GraphQLError } from "graphql";
 import Product from "../../models/Product.js";
 
 const getAllProducts = async (_p) => {
@@ -29,7 +30,10 @@ const createProduct = async (_p, args) => {
 }
 
 const updateProduct = async (_p, { id, ...args }) => {
-  const product = await Product.findByIdAndUpdate(id, args);
+  const product = await Product.findByIdAndUpdate(id, args, {
+      runValidation: true,
+      new: true
+    });
 
   if (!product) {
     throw new GraphQLError("Product not found", {

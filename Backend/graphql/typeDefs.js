@@ -19,6 +19,15 @@ export default `#graphql
     manufacturer: ID!
     amountInStock: Int
   }
+  input UpdateProductInput {
+    name: String
+    sku: String
+    description: String
+    price: Float
+    category: String
+    manufacturer: ID
+    amountInStock: Int
+  }
 
   input ManufacturerInput{
     name: String!
@@ -28,11 +37,26 @@ export default `#graphql
     address: String
     contact: ContactInput
   }
+  
+  input UpdateManufacturerInput{
+    name: String
+    country: String
+    website: String
+    description: String
+    address: String
+    contact: UpdateContactInput
+  }
 
   input ContactInput {
       name: String!
-      phone: String
+      phone: String!
       email: String!
+  }
+
+  input UpdateContactInput {
+    name: String
+    phone: String
+    email: String
   }
   
   type Query {
@@ -46,15 +70,15 @@ export default `#graphql
 
   type Mutation {
     addProduct(input: ProductInput!): Product
-    updateProduct(id: ID!, input: ProductInput!): Product
+    updateProduct(id: ID!, input: UpdateProductInput!): Product
     deleteProduct(id: ID!): Product
 
     addManufacturer(input: ManufacturerInput!): Manufacturer
-    updateManufacturer(id: ID!, input: ManufacturerInput!): Manufacturer
+    updateManufacturer(id: ID!, input: UpdateManufacturerInput!): Manufacturer
     deleteManufacturer(id: ID!): Manufacturer
     
     addContact(input: ContactInput!): Contact
-    updateContact(id: ID!, input: ContactInput!): Contact
+    updateContact(id: ID!, input: UpdateContactInput!): Contact
     deleteContact(id: ID!): Contact
   }
 
@@ -72,7 +96,7 @@ export default `#graphql
     website: String
     description: String
     address: String
-    contact: ID!
+    contact: Contact
   }
 `;
 
