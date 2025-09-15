@@ -9,13 +9,17 @@ import contactsResource from "./rest/contacts.resource.js";
 import productsResource from "./rest/products.resource.js";
 import manufacturerResource from "./rest/manufacturer.resource.js";
 
+import typeDefs from "./graphql/typeDefs.js"
+import resolvers from "./graphql/resolvers.js"
+// import reso from "./graphql/resolvers/products.js"
+
 dotenv.config();
 const app = express();
 app.use(express.json());
 
 /* GraphQL API */
 
-/* const apollo = new ApolloServer({ typeDefs, resolvers });
+const apollo = new ApolloServer({ typeDefs, resolvers });
 await apollo.start();
 
 app.use(
@@ -23,7 +27,7 @@ app.use(
 	expressMiddleware(apollo, {
 		context: async () => ({}),
 	})
-); */
+);
 
 /* REST API */
 
