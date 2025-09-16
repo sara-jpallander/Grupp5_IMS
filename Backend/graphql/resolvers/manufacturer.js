@@ -2,11 +2,11 @@ import { GraphQLError } from "graphql";
 import Manufacturer from "../../models/Manufacturer.js"
 import Contact from "../../models/Contact.js";
 
-const getAllManufacturers = async (_p) => {
+const getAll = async (_p) => {
     return await Manufacturer.find();
 };
 
-const getManufacturerById = async (_P, { id }) => {
+const getById = async (_P, { id }) => {
     const manufacturer = await Manufacturer.findById(id).populate("contact");
 
 if(!manufacturer) {
@@ -18,7 +18,7 @@ if(!manufacturer) {
     return manufacturer;
 };
 
-const addManufacturer = async (_p, { input }) => {
+const add = async (_p, { input }) => {
     const contact = await Contact.create(input.contact);
     let manufacturer = await Manufacturer.create({ ...input, contact: contact._id });
     manufacturer = await Manufacturer.findById(manufacturer._id).populate("contact");
@@ -30,7 +30,7 @@ const addManufacturer = async (_p, { input }) => {
     return manufacturer;
 }
 
-const updateManufacturer = async (_p, { id, input }) => {
+const updateById = async (_p, { id, input }) => {
     const manufacturer = await Manufacturer.findById(id);
     
     if (!manufacturer) {
@@ -54,7 +54,7 @@ const updateManufacturer = async (_p, { id, input }) => {
     return updatedManufacturer;
 };
 
-const deleteManufacturer = async (_p, {id}) => {
+const deleteById = async (_p, {id}) => {
     let manufacturer = await Manufacturer.findByIdAndDelete(id).populate("contact");
 
     if (!manufacturer) {
@@ -70,10 +70,10 @@ const deleteManufacturer = async (_p, {id}) => {
     return manufacturer;
 };
 
-export {
-        getAllManufacturers,
-        getManufacturerById,
-        addManufacturer,
-        updateManufacturer,
-        deleteManufacturer
+export default {
+        getAll,
+        getById,
+        add,
+        updateById,
+        deleteById
     }

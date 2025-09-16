@@ -1,31 +1,37 @@
-import { getAllProducts, getProductById, addProduct, updateProduct, deleteProduct } from "./resolvers/product.js";
-import { getAllManufacturers, getManufacturerById, addManufacturer, updateManufacturer, deleteManufacturer } from "./resolvers/manufacturer.js";
-import { getAllContacts, getContactById } from "./resolvers/contact.js"
+import product from "./resolvers/product.js";
+import manufacturer from "./resolvers/manufacturer.js";
+import contact from "./resolvers/contact.js"
 
 export default {
     Query: {
-        products: getAllProducts,
-        product: getProductById,
-        manufacturers: getAllManufacturers,
-        manufacturer: getManufacturerById,
-        contacts: getAllContacts,
-        contact: getContactById,
+        products: product.getAll,
+        productLowStock: product.getLowStock,
+        productCriticalStock: product.getCriticalStock,
+        stockValue: product.getStockValue,
+        stockValueByManufacturer: product.getStockValueByManufacturer,
+        product: product.getById,
+        manufacturers: manufacturer.getAll,
+        manufacturer: manufacturer.getById,
+        contacts: contact.getAll,
+        contact: contact.getById,
     },
     
     Mutation: {
       // Products
-      addProduct: addProduct,
-      updateProduct: updateProduct,
-      deleteProduct: deleteProduct,
+      addProduct: product.add,
+      updateProduct: product.updateById,
+      deleteProduct: product.deleteById,
 
       // Manufacturers
-      addManufacturer: addManufacturer,
-      updateManufacturer: updateManufacturer,
-      deleteManufacturer: deleteManufacturer
+      addManufacturer: manufacturer.add,
+      updateManufacturer: manufacturer.updateById,
+      deleteManufacturer: manufacturer.deleteById
     },
 
     Product: {
-      id: (doc) => String(doc._id)
+      id: (doc) => String(doc._id),
+      isLowStock: (doc) => doc.amountInStock < 10 ? true : false,
+      isCriticalStock: (doc) => doc.amountInStock < 5 ? true : false,
     },
 
     Manufacturer: {

@@ -1,11 +1,11 @@
 import Contact from "../../models/Contact.js";
 import { GraphQLError } from "graphql";
 
-const getAllContacts = async (_p) => {
+const getAll = async (_p) => {
           return await Contact.find();
         };
 
-const getContactById = async (_P, { id }) => {
+const getById = async (_P, { id }) => {
   const contact = await Contact.findById(id);
 
     if (!contact) {
@@ -17,4 +17,4 @@ const getContactById = async (_P, { id }) => {
             return contact;
         };
 
-export {getAllContacts, getContactById}
+export default { getAll, getById }

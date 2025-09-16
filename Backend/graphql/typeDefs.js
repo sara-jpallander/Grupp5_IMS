@@ -8,6 +8,8 @@ export default `#graphql
     category: String
     manufacturer: ID!
     amountInStock: Int
+    isLowStock: Boolean
+    isCriticalStock: Boolean
   }
 
   input ProductInput {
@@ -59,8 +61,22 @@ export default `#graphql
     email: String
   }
   
+  type StockValueByManufacturer {
+    id: ID
+    name: String
+    location: String
+    contactEmail: String
+    website: String
+    totalStock: Int
+    totalStockValue: Float
+  }
+  
   type Query {
     products: [Product]
+    stockValue: Float
+    stockValueByManufacturer: [StockValueByManufacturer]
+    productLowStock: [Product]
+    productCriticalStock: [Product]
     product(id: ID!): Product
     manufacturers: [Manufacturer]
     manufacturer(id: ID!): Manufacturer
