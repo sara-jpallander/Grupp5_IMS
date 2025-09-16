@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import { GraphQLError } from "graphql";
 import Product from "../../models/Product.js";
 
@@ -17,23 +18,14 @@ const getProductById = async (_p, { id }) => {
   return product;
 }
 
-const createProduct = async (_p, args) => {
-  const product = await Product.create(args);
-
-  // if (!product) {
-  //   throw new GraphQLError("Failed to create product", {
-  //     extensions: { code: "500_SERVER_ERROR" }
-  //   });
-  // }
-
+const addProduct = async (_p, { input }) => {
+  input.manufacturer = new mongoose.Types.ObjectId(input.manufacturer);
+  const product = await Product.create(input);
   return product;
 }
 
-const updateProduct = async (_p, { id, ...args }) => {
-  const product = await Product.findByIdAndUpdate(id, args, {
-      runValidation: true,
-      new: true
-    });
+const updateProduct = async (_p, { id, input }) => {
+  const product = await Product.findById(id);
 
   if (!product) {
     throw new GraphQLError("Product not found", {
@@ -41,7 +33,13 @@ const updateProduct = async (_p, { id, ...args }) => {
     });
   }
 
-  return product;
+  const updatedProduct = await Product.findByIdAndUpdate(id, input, {
+      runValidation: true,
+      new: true
+    });
+
+
+  return updatedProduct;
 }
 
 const deleteProduct = async (_p, { id }) => {
@@ -59,7 +57,7 @@ const deleteProduct = async (_p, { id }) => {
 export {
   getAllProducts,
   getProductById,
-  createProduct,
+  addProduct,
   updateProduct,
   deleteProduct
 };

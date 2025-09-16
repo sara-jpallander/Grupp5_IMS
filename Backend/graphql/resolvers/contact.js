@@ -5,7 +5,7 @@ const getAllContacts = async (_p) => {
           return await Contact.find();
         };
 
-const getAllContactsById =  async (_P, { id }) => {
+const getContactById = async (_P, { id }) => {
   const contact = await Contact.findById(id);
 
     if (!contact) {
@@ -17,4 +17,4 @@ const getAllContactsById =  async (_P, { id }) => {
             return contact;
         };
 
-export {getAllContacts, getAllContactsById}
+export {getAllContacts, getContactById}

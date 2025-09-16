@@ -1,6 +1,6 @@
-import { getAllProducts, getProductById, createProduct, updateProduct, deleteProduct } from "./resolvers/product.js";
+import { getAllProducts, getProductById, addProduct, updateProduct, deleteProduct } from "./resolvers/product.js";
 import { getAllManufacturers, getManufacturerById, addManufacturer, updateManufacturer, deleteManufacturer } from "./resolvers/manufacturer.js";
-import { getAllContacts, getAllContactsById } from "./resolvers/contact.js"
+import { getAllContacts, getContactById } from "./resolvers/contact.js"
 
 export default {
     Query: {
@@ -9,20 +9,19 @@ export default {
         manufacturers: getAllManufacturers,
         manufacturer: getManufacturerById,
         contacts: getAllContacts,
-        contact: getAllContactsById,
-
+        contact: getContactById,
     },
     
     Mutation: {
       // Products
-      addProduct: createProduct,
+      addProduct: addProduct,
       updateProduct: updateProduct,
       deleteProduct: deleteProduct,
 
       // Manufacturers
-        addManufacturer: addManufacturer,
-        updateManufacturer: updateManufacturer,
-        deleteManufacturer: deleteManufacturer
+      addManufacturer: addManufacturer,
+      updateManufacturer: updateManufacturer,
+      deleteManufacturer: deleteManufacturer
     },
 
     Product: {
