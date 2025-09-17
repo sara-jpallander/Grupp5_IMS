@@ -74,6 +74,13 @@ async function getContact(req, res) {
 // UPDATE BY ID
 async function updateContact(req, res) {
   try {
+    // Validate ID parameter
+    const parsedId = idSchema.safeParse(req.params.id);
+    if (!parsedId.success) {
+      return res
+        .status(400)
+        .json({ error: "Invalid ID format", details: parsedId.error.errors });
+    }
     // Validate request body using Zod schema
     const parsed = contactSchema.partial().safeParse(req.body);
     if (!parsed.success) {
