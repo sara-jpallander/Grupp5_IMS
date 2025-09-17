@@ -1,6 +1,7 @@
 import express from "express";
 import Contact from "../models/Contact.js";
-import { contactSchema } from "../schemas/contactSchema.js";
+import { contactSchema } from "../validation/contact.schema.js";
+import { z } from "zod";
 
 const idSchema = z.string().length(24, "Invalid id format");
 const router = express.Router();

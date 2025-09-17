@@ -1,9 +1,9 @@
 import express from "express";
 import Manufacturer from "../models/Manufacturer.js";
 import Contact from "../models/Contact.js";
-import { contactSchema } from "../schemas/contactSchema.js";
+import { contactSchema } from "../validation/contact.schema.js";
 import { z } from "zod";
-import { manufacturerSchema } from "../schemas/manufacturerSchema.js";
+import { manufacturerSchema } from "../validation/manufacturer.schema.js";
 
 const idSchema = z.string().length(24, "Invalid id format");
 
