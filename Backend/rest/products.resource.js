@@ -1,5 +1,9 @@
 import express from "express";
 import Product from "../models/Product.js";
+import { z } from "zod";
+import { productSchema } from "../validation/product.schema.js";
+
+const idSchema = z.string().length(24, "Invalid id format");
 
 const router = express.Router();
 
@@ -21,9 +25,14 @@ router.delete("/:id", deleteProduct);
 //CREATE
 async function createProduct(req, res) {
   try {
-    const product = await Product.create(req.body);
-
-    res.status(201).json({ message: "Products created: ", data: product });
+    const parsed = productSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res
+        .status(400)
+        .json({ error: "Validation failed", details: parsed.error.errors });
+    }
+    const product = await Product.create(parsed.data);
+    res.status(201).json({ message: "Product created", data: product });
   } catch (error) {
     res.status(500).json({ error });
   }
@@ -43,6 +52,13 @@ async function getAllProducts(req, res) {
 
 //GET BY ID
 async function getProduct(req, res) {
+  // Validate ID parameter
+  const parsedId = idSchema.safeParse(req.params.id);
+  if (!parsedId.success) {
+    return res
+      .status(400)
+      .json({ error: "Invalid ID format", details: parsedId.error.errors });
+  }
   try {
     const product = await Product.findById(req.params.id);
 
@@ -59,14 +75,27 @@ async function getProduct(req, res) {
 
 //UPDATE BY ID
 async function updateProduct(req, res) {
+  // Validate ID parameter
+  const parsedId = idSchema.safeParse(req.params.id);
+  if (!parsedId.success) {
+    return res
+      .status(400)
+      .json({ error: "Invalid ID format", details: parsedId.error.errors });
+  }
+  const parsed = productSchema.partial().safeParse(req.body);
+  if (!parsed.success) {
+    return res
+      .status(400)
+      .json({ error: "Validation failed", details: parsed.error.errors });
+  }
   try {
-    const product = await Product.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
-
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      parsed.data,
+      { new: true }
+    );
     if (!product)
       return res.status(404).json({ error: "Could not find product." });
-
     res
       .status(200)
       .json({ message: "Successfully updated product.", data: product });
@@ -77,6 +106,13 @@ async function updateProduct(req, res) {
 
 //DELETE BY ID
 async function deleteProduct(req, res) {
+  // Validate ID parameter
+  const parsedId = idSchema.safeParse(req.params.id);
+  if (!parsedId.success) {
+    return res
+      .status(400)
+      .json({ error: "Invalid ID format", details: parsedId.error.errors });
+  }
   try {
     const deleteProductById = await Product.findByIdAndDelete(req.params.id);
 
@@ -87,12 +123,10 @@ async function deleteProduct(req, res) {
       .status(200)
       .json({ message: "Deleted product by ID", data: deleteProductById });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Internal server error. Failed to delete product by ID.",
-        error,
-      });
+    res.status(500).json({
+      message: "Internal server error. Failed to delete product by ID.",
+      error,
+    });
   }
 }
 
@@ -117,12 +151,10 @@ async function getTotalStockValue(req, res) {
       .status(200)
       .json({ data: { totalStock: allProducts[0]?.totalStockValue || 0 } });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Internal server error. Failed to retrieve total stock value.",
-        error,
-      });
+    res.status(500).json({
+      message: "Internal server error. Failed to retrieve total stock value.",
+      error,
+    });
   }
 }
 
@@ -164,37 +196,33 @@ async function getTotalStockValueByManufacturer(req, res) {
 
     res.status(200).json({ data: result });
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message:
-          "Internal server error. Failed to retrieve stock value by manufacturer.",
-        error: error.message,
-      });
+    res.status(500).json({
+      message:
+        "Internal server error. Failed to retrieve stock value by manufacturer.",
+      error: error.message,
+    });
   }
 }
 
 async function getLowStock(req, res) {
   try {
     const result = await Product.aggregate([
-      { $match: { amountInStock: { $lt: 10 }} },
+      { $match: { amountInStock: { $lt: 10 } } },
     ]);
 
     res.status(200).json({ data: result });
   } catch (error) {
-    res.status(500)
-      .json({
-        message:
-          "Internal server error. Failed to retrieve low stock.",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Internal server error. Failed to retrieve low stock.",
+      error: error.message,
+    });
   }
 }
 
 async function getCriticalStock(req, res) {
   try {
     const result = await Product.aggregate([
-      { $match: { amountInStock: { $lt: 5 }} },
+      { $match: { amountInStock: { $lt: 5 } } },
       {
         $lookup: {
           from: "manufacturers",
@@ -223,20 +251,18 @@ async function getCriticalStock(req, res) {
           contact: {
             name: "$contactInfo.name",
             phone: "$contactInfo.phone",
-            email: "$contactInfo.email"
-          }
+            email: "$contactInfo.email",
+          },
         },
       },
     ]);
 
     res.status(200).json({ data: result });
   } catch (error) {
-    res.status(500)
-      .json({
-        message:
-          "Internal server error. Failed to retrieve critical stock.",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Internal server error. Failed to retrieve critical stock.",
+      error: error.message,
+    });
   }
 }
 
