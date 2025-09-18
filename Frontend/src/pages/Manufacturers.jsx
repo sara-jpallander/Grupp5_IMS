@@ -6,8 +6,6 @@ export default function Manufacturers() {
   const { data: manufacturersData } = useQuery(GET_MANUFACTURERS);
   const manufacturers = manufacturersData?.manufacturers || [];
   
-  console.log(manufacturersData);
-  
   return (
     <div className="max-w-4xl mx-auto p-8">
       <h1 className="text-4xl font-bold mb-4">Manufacturers</h1>
@@ -29,7 +27,7 @@ export default function Manufacturers() {
       <div className="flex flex-col gap-2 mt-6">
         {
           manufacturers.map(m => (
-            <div className="border-1 p-6 flex gap-2 justify-between" key={manufacturers.id}>
+            <div className="border-1 p-6 flex gap-2 justify-between" key={m.id}>
               <div>
                 <div className="rounded-full bg-red-500 h-[100px] w-[100px] flex items-center justify-center">Logga</div>
               </div>
