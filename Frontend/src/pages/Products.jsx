@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 
 export default function Products() {
   const { data: productsData } = useQuery(GET_PRODUCTS);
@@ -97,26 +98,38 @@ export default function Products() {
         </Select>
       </div>
 
-      <div className="mt-4">[Öppna modal med produktinformation]</div>
-
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-6 text-sm">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-6 text-sm">
         {products.map((product) => (
           <div
             key={product.id}
-            className="border-1 border-gray-200 rounded-sm p-3 flex flex-col"
+            className="border-1 border-gray-200 rounded-sm p-5 flex flex-col"
           >
-            <div className="font-semibold">{product.name}</div>
+            <div className="flex justify-between gap-1">
+            <div className="font-semibold truncate">{product.name}</div>
+            <Badge variant="outline" className="text-[.65rem]">{product.category}</Badge>
+            </div>
             <div className="text-gray-400 text-[.6rem] mb-2">{product.sku}</div>
+            
             <div className="text-gray-700 text-[.7rem] truncate">
               {product.description}
             </div>
-            <div className="flex justify-between gap-2 pt-2 mt-auto text-[.8rem] font-bold">
+            <div className="flex justify-between gap-2 pt-4 mt-auto text-[.8rem] font-bold">
               <div>${product.price}</div>
               <div
                 className={clsx("", getStockStatusColor(product.amountInStock))}
               >
                 {product.amountInStock} in stock
               </div>
+            </div>
+            {/* Action buttons */}
+            <div className="flex justify-center gap-2 pt-3 mt-auto">
+              <Button variant="outline">
+                <Edit /> Edit
+              </Button>
+              <Button>
+                <Eye />
+                Show details
+              </Button>
             </div>
           </div>
         ))}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { Edit, Eye, Mail, Phone, Search } from "lucide-react";
 import { GET_MANUFACTURERS, ADD_MANUFACTURER, UPDATE_MANUFACTURER } from "@/api/graphql";
@@ -83,7 +83,7 @@ export default function Manufacturers() {
           ex?
         </p>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mt-4">
           <div className="relative my-4 flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -122,9 +122,9 @@ export default function Manufacturers() {
             </SelectContent>
           </Select>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-6">
           {manufacturers.map((m) => (
-            <div className="border-1 p-5" key={m.id}>
+            <div className="border-1 p-5 flex flex-col rounded-sm" key={m.id}>
               <div className="font-bold text-center pb-2 mb-4 border-b-1">
                 {m.name}
               </div>
@@ -134,12 +134,12 @@ export default function Manufacturers() {
                 <div className="flex items-center gap-2">
                   <Mail className="size-4" /> {m.contact.email}
                 </div>
-                <div className="flex items-center gap-2">
+                {m.contact.phone && (<div className="flex items-center gap-2">
                   <Phone className="size-4" /> {m.contact.phone}
-                </div>
+                </div>)}
               </div>
               {/* Action buttons */}
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-center gap-2 mt-auto">
                 <Button variant="outline" onClick={() => handleEdit(m)}>
                   <Edit /> Edit
                 </Button>
