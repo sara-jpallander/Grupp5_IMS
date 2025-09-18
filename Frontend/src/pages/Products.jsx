@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { useQuery } from "@apollo/client/react";
 import { GET_PRODUCTS } from "@/api/graphql";
+import {Button} from "../components/ui/button";
 
 export default function Products() {
   const { data: productsData } = useQuery(GET_PRODUCTS);

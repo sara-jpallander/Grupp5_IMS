@@ -17,3 +17,21 @@ export const GET_PRODUCTS = gql`
     }
   }
 `;
+
+export const GET_MANUFACTURERS = gql`
+  query GetManufacturers {
+    manufacturers {
+      id
+      name
+      country
+      website
+      description
+      address
+      contact {
+        name
+        email
+        phone
+      }
+    }
+  }
+`;

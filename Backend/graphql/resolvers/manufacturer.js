@@ -3,7 +3,7 @@ import Manufacturer from "../../models/Manufacturer.js"
 import Contact from "../../models/Contact.js";
 
 const getAll = async (_p) => {
-    return await Manufacturer.find();
+  return await Manufacturer.find().populate("contact");
 };
 
 const getById = async (_P, { id }) => {
@@ -71,9 +71,9 @@ const deleteById = async (_p, {id}) => {
 };
 
 export default {
-        getAll,
-        getById,
-        add,
-        updateById,
-        deleteById
-    }
+  getAll,
+  getById,
+  add,
+  updateById,
+  deleteById,
+};
