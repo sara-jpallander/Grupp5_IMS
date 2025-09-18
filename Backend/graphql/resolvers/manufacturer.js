@@ -30,26 +30,23 @@ const getById = async (_P, { id }) => {
 };
 
 const add = async (_p, { input }) => {
-  // Validate nested contact
-  const contactParsed = contactSchema.safeParse(input.contact);
-  if (!contactParsed.success) {
+  const parsed = manufacturerSchema.safeParse(input);
+
+  if (!parsed.success) {
+    console.log("Manufacturer validation failed:", parsed.error);
     throw new GraphQLError(
-      "Contact validation failed: " + JSON.stringify(contactParsed.error.errors)
+      "Manufacturer validation failed: " + JSON.stringify(parsed.error)
     );
   }
-  // Validate manufacturer
-  const manufacturerParsed = manufacturerSchema.safeParse(input);
-  if (!manufacturerParsed.success) {
-    throw new GraphQLError(
-      "Manufacturer validation failed: " +
-        JSON.stringify(manufacturerParsed.error.errors)
-    );
-  }
-  const contact = await Contact.create(contactParsed.data);
+
+  const contactDoc = await Contact.create(parsed.data.contact);
+  const { contact, ...manufacturerData } = parsed.data;
+
   let manufacturer = await Manufacturer.create({
-    ...input,
-    contact: contact._id,
+    ...manufacturerData,
+    contact: contactDoc._id,
   });
+
   manufacturer = await Manufacturer.findById(manufacturer._id).populate(
     "contact"
   );
@@ -74,35 +71,61 @@ const updateById = async (_p, { id, input }) => {
       extensions: { code: "404_NOT_FOUND" },
     });
   }
-  if (input.contact && manufacturer.contact) {
-    const contactParsed = contactSchema.partial().safeParse(input.contact);
-    if (!contactParsed.success) {
-      throw new GraphQLError(
-        "Contact validation failed: " +
-          JSON.stringify(contactParsed.error.errors)
+
+  try {
+    // Validate contact (if present)
+    if (input.contact && manufacturer.contact) {
+      const contactParsed = contactSchema.partial().safeParse(input.contact);
+      if (!contactParsed.success) {
+        throw new GraphQLError(
+          "Contact validation failed: " +
+            JSON.stringify(contactParsed.error)
+        );
+      }
+
+      // Update contact
+      await Contact.findByIdAndUpdate(
+        manufacturer.contact,
+        contactParsed.data,
+        {
+          runValidators: true,
+          new: true,
+        }
       );
     }
-    await Contact.findByIdAndUpdate(manufacturer.contact, contactParsed.data, {
-      runValidators: true,
-      new: true,
-    });
-  }
-  const manufacturerParsed = manufacturerSchema.partial().safeParse(input);
-  if (!manufacturerParsed.success) {
-    throw new GraphQLError(
-      "Manufacturer validation failed: " +
-        JSON.stringify(manufacturerParsed.error.errors)
-    );
-  }
-  const updatedManufacturer = await Manufacturer.findByIdAndUpdate(
-    id,
-    { ...input, contact: manufacturer.contact },
-    {
-      runValidators: true,
-      new: true,
+
+    // Validate manufacturer (excluding contact)
+    const { contact, ...manufacturerData } = input;
+    const manufacturerParsed = manufacturerSchema
+      .omit({ contact: true })
+      .partial()
+      .safeParse(manufacturerData);
+
+    if (!manufacturerParsed.success) {
+      throw new GraphQLError(
+        "Manufacturer validation failed: " +
+          JSON.stringify(manufacturerParsed.error)
+      );
     }
-  ).populate("contact");
-  return updatedManufacturer;
+
+    // Update manufacturer
+    const updatedManufacturer = await Manufacturer.findByIdAndUpdate(
+      id,
+      manufacturerParsed.data,
+      {
+        runValidators: true,
+        new: true,
+      }
+    ).populate("contact");
+    
+    return updatedManufacturer;
+  } catch (error) {
+    console.error("Error updating manufacturer:", error);
+    if (error instanceof GraphQLError) {
+      throw error;
+    }
+    throw new GraphQLError(`Failed to update manufacturer: ${error.message}`);
+  }
 };
 
 const deleteById = async (_p, { id }) => {
@@ -138,4 +161,3 @@ export default {
   updateById,
   deleteById,
 };
-

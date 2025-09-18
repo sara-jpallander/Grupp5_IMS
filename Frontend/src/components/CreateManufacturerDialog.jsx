@@ -30,8 +30,8 @@ const formSchema = z.object({
   website: z.string().optional(),
   description: z.string().optional(),
   address: z.string().optional(),
-  contact_name: z.string(),
-  contact_email: z.email(),
+  contact_name: z.string().min(1, "Contact name is required"),
+  contact_email: z.email("Must be a valid email"),
   contact_phone: z.string().optional(),
 });
 
