@@ -1,7 +1,19 @@
 import clsx from "clsx";
 import { useQuery } from "@apollo/client/react";
 import { GET_PRODUCTS } from "@/api/graphql";
-import {Button} from "../components/ui/button";
+import { Edit, Eye, Search } from "lucide-react";
+import { Button } from "../components/ui/button";
+import Pagination from "@/components/Pagination";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Products() {
   const { data: productsData } = useQuery(GET_PRODUCTS);
@@ -25,15 +37,64 @@ export default function Products() {
         adipisci quasi similique et numquam beatae! In laudantium eius ex?
       </p>
 
-      <div className="flex gap-2">
-        <div className="border-1 w-full max-w-xl p-2">Search...</div>
-        <Button variant="secondary">Sök</Button>
+      <div className="flex items-center gap-2">
+        <div className="relative my-4 flex-1">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search..."
+            value=""
+            onChange={() => {}}
+            className="pl-8"
+          />
+        </div>
+
+        <Select>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Manufacturer" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All manufacturers</SelectItem>
+            <SelectItem value="ikea">IKEA</SelectItem>
+            <SelectItem value="volvo">Volvo</SelectItem>
+            <SelectItem value="ericsson">Ericsson</SelectItem>
+            <SelectItem value="hm">H&M</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Stock status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All status</SelectItem>
+            <SelectItem value="fine">Fine</SelectItem>
+            <SelectItem value="low">Low</SelectItem>
+            <SelectItem value="critical">Critical</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Category" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All categories</SelectItem>
+            <SelectItem value="fine">Clothing</SelectItem>
+            <SelectItem value="tech">Technology</SelectItem>
+            <SelectItem value="furniture">Furniture</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
-      <div className="">
-      <strong>Filter:</strong> Manufacturer | In stock (All, Low, Critical) | Category
-      </div>
-      <div className="">
-      <strong>Sort:</strong> Alphabetically | By price | By stock
+
+      <div className="flex mb-6">
+        <Select>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder="Sort alphabetically" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="alphabetically">Sort alphabetically</SelectItem>
+            <SelectItem value="price">Sort by price</SelectItem>
+            <SelectItem value="stock">Sort by stock</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="mt-4">[Öppna modal med produktinformation]</div>
@@ -51,7 +112,9 @@ export default function Products() {
             </div>
             <div className="flex justify-between gap-2 pt-2 mt-auto text-[.8rem] font-bold">
               <div>${product.price}</div>
-              <div className={clsx("", getStockStatusColor(product.amountInStock))}>
+              <div
+                className={clsx("", getStockStatusColor(product.amountInStock))}
+              >
                 {product.amountInStock} in stock
               </div>
             </div>
@@ -59,7 +122,7 @@ export default function Products() {
         ))}
       </div>
 
-      [Pagination: Previous | Page 1 | Page 2 | Next]
+      <Pagination className="mt-8" />
     </div>
   );
 }
