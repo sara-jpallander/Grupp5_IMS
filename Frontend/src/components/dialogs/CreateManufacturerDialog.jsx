@@ -41,6 +41,7 @@ export default function CreateManufacturerDialog({
   onClose,
   onSubmit,
   editData = null,
+  loading = false
 }) {
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -64,7 +65,7 @@ export default function CreateManufacturerDialog({
     }
   }, [editData, form]);
 
-  function handleFormSubmit(data) {
+  async function handleFormSubmit(data) {
     const input = {
       name: data.name.trim(),
       country: data.country.trim(),
@@ -80,7 +81,7 @@ export default function CreateManufacturerDialog({
 
     const variables = editData ? { id: editData.id, input } : { input };
 
-    onSubmit(variables, !!editData);
+    await onSubmit(variables, !!editData);
     form.reset();
     onClose();
   }
@@ -91,7 +92,7 @@ export default function CreateManufacturerDialog({
       onClose={onClose}
       title={editData ? "Edit Manufacturer" : "Create Manufacturer"}
       description="Enter manufacturer information."
-      // loading={loading}
+      loading={loading}
       showCancelButton={true}
       footerButtons={[
         {

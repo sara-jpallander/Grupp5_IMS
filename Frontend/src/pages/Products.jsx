@@ -8,16 +8,15 @@ import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import LoadingText from "@/components/LoadingText";
 
 export default function Products() {
-  const { data: productsData } = useQuery(GET_PRODUCTS);
+  const { data: productsData, loading, refetch } = useQuery(GET_PRODUCTS);
   const products = productsData?.products || [];
 
   const getStockStatusColor = (value) => {
@@ -99,40 +98,54 @@ export default function Products() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-6 text-sm">
-        {products.map((product) => (
-          <div
-            key={product.id}
-            className="border-1 border-gray-200 rounded-sm p-5 flex flex-col"
-          >
-            <div className="flex justify-between gap-1">
-            <div className="font-semibold truncate">{product.name}</div>
-            <Badge variant="outline" className="text-[.65rem]">{product.category}</Badge>
-            </div>
-            <div className="text-gray-400 text-[.6rem] mb-2">{product.sku}</div>
-            
-            <div className="text-gray-700 text-[.7rem] truncate">
-              {product.description}
-            </div>
-            <div className="flex justify-between gap-2 pt-4 mt-auto text-[.8rem] font-bold">
-              <div>${product.price}</div>
-              <div
-                className={clsx("", getStockStatusColor(product.amountInStock))}
-              >
-                {product.amountInStock} in stock
+        {loading ? (
+          <LoadingText
+            label="Loading products..."
+            className=" col-span-full"
+          />
+        ) : (
+          products.map((product) => (
+            <div
+              key={product.id}
+              className="border-1 border-gray-200 rounded-sm p-5 flex flex-col"
+            >
+              <div className="flex justify-between gap-1">
+                <div className="font-semibold truncate">{product.name}</div>
+                <Badge variant="outline" className="text-[.65rem]">
+                  {product.category}
+                </Badge>
+              </div>
+              <div className="text-gray-400 text-[.6rem] mb-2">
+                {product.sku}
+              </div>
+
+              <div className="text-gray-700 text-[.7rem] truncate">
+                {product.description}
+              </div>
+              <div className="flex justify-between gap-2 pt-4 mt-auto text-[.8rem] font-bold">
+                <div>${product.price}</div>
+                <div
+                  className={clsx(
+                    "",
+                    getStockStatusColor(product.amountInStock)
+                  )}
+                >
+                  {product.amountInStock} in stock
+                </div>
+              </div>
+              {/* Action buttons */}
+              <div className="flex justify-center gap-2 pt-3 mt-auto">
+                <Button variant="outline">
+                  <Edit /> Edit
+                </Button>
+                <Button>
+                  <Eye />
+                  Show details
+                </Button>
               </div>
             </div>
-            {/* Action buttons */}
-            <div className="flex justify-center gap-2 pt-3 mt-auto">
-              <Button variant="outline">
-                <Edit /> Edit
-              </Button>
-              <Button>
-                <Eye />
-                Show details
-              </Button>
-            </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
 
       <Pagination className="mt-8" />

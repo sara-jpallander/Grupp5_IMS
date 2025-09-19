@@ -1,44 +1,54 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { Edit, Eye, Mail, Phone, Search } from "lucide-react";
-import { GET_MANUFACTURERS, ADD_MANUFACTURER, UPDATE_MANUFACTURER } from "@/api/graphql";
+import {
+  GET_MANUFACTURERS,
+  ADD_MANUFACTURER,
+  UPDATE_MANUFACTURER,
+} from "@/api/graphql";
 import { Button } from "../components/ui/button";
 import { Input } from "@/components/ui/input";
 import Pagination from "@/components/Pagination";
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import CreateManufacturerDialog from "@/components/dialogs/CreateManufacturerDialog";
+import ViewManufacturerDialog from "@/components/dialogs/ViewManufacturerDialog";
+import LoadingText from "@/components/LoadingText";
 
 export default function Manufacturers() {
-  const { data: manufacturersData, refetch } = useQuery(GET_MANUFACTURERS);
+  const {
+    data: manufacturersData,
+    loading,
+    refetch,
+  } = useQuery(GET_MANUFACTURERS);
   const manufacturers = manufacturersData?.manufacturers || [];
 
-  const [addManufacturer, { loading: addLoading }] = useMutation(ADD_MANUFACTURER);
-  const [updateManufacturer, { loading: updateLoading }] = useMutation(UPDATE_MANUFACTURER);
+  const [addManufacturer, { loading: addLoading }] =
+    useMutation(ADD_MANUFACTURER);
+  const [updateManufacturer, { loading: updateLoading }] =
+    useMutation(UPDATE_MANUFACTURER);
 
   const [isOpen, setIsOpen] = useState(false);
-  const [editingManufacturer, setEditingManufacturer] = useState(null);
+  const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [currentManufacturer, setCurrentManufacturer] = useState(null);
 
-  function handleOpen() {
-    setIsOpen(true);
-  }
+  // Create/Edit modal
+  const handleOpen = () => setIsOpen(true);
 
-  function handleEdit(data) {
-    setEditingManufacturer(data);
-    handleOpen();
-  }
-
-  function onClose() {
-    setEditingManufacturer(null);
+  const onClose = () => {
+    setCurrentManufacturer(null);
     setIsOpen(false);
-  }
+  };
+
+  const handleEdit = (data) => {
+    setCurrentManufacturer(data);
+    handleOpen();
+  };
 
   async function handleCreate(data, isEdit) {
     try {
@@ -63,14 +73,32 @@ export default function Manufacturers() {
     }
   }
 
+  // View details modal
+  const handleOpenInfo = (m) => {
+    setCurrentManufacturer(m);
+    setIsInfoOpen(true);
+  };
+
+  const onCloseInfo = () => {
+    setCurrentManufacturer(null);
+    setIsInfoOpen(false);
+  };
+
   return (
     <>
       <CreateManufacturerDialog
         isOpen={isOpen}
         onClose={onClose}
         onSubmit={handleCreate}
-        editData={editingManufacturer}
+        editData={currentManufacturer}
+        loading={addLoading || updateLoading}
       />
+      <ViewManufacturerDialog
+        isOpen={isInfoOpen}
+        onClose={onCloseInfo}
+        data={currentManufacturer}
+      />
+
       <div className="max-w-4xl mx-auto p-8">
         <div className="flex gap-4 justify-between">
           <h1 className="text-4xl font-bold mb-4">Manufacturers</h1>
@@ -123,33 +151,39 @@ export default function Manufacturers() {
           </Select>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-6">
-          {manufacturers.map((m) => (
-            <div className="border-1 p-5 flex flex-col rounded-sm" key={m.id}>
-              <div className="font-bold text-center pb-2 mb-4 border-b-1">
-                {m.name}
-              </div>
-              <div className="text-sm mb-4">
-                {/* Contact info */}
-                <div className="font-bold">{m.contact.name}</div>
-                <div className="flex items-center gap-2">
-                  <Mail className="size-4" /> {m.contact.email}
+          {loading ? (
+            <LoadingText label="Loading manufacturers..." className=" col-span-full" />
+          ) : (
+            manufacturers.map((m) => (
+              <div className="border-1 p-5 flex flex-col rounded-sm" key={m.id}>
+                <div className="font-bold text-center pb-2 mb-4 border-b-1">
+                  {m.name}
                 </div>
-                {m.contact.phone && (<div className="flex items-center gap-2">
-                  <Phone className="size-4" /> {m.contact.phone}
-                </div>)}
+                <div className="text-sm mb-4">
+                  {/* Contact info */}
+                  <div className="font-bold">{m.contact.name}</div>
+                  <div className="flex items-center gap-2">
+                    <Mail className="size-4" /> {m.contact.email}
+                  </div>
+                  {m.contact.phone && (
+                    <div className="flex items-center gap-2">
+                      <Phone className="size-4" /> {m.contact.phone}
+                    </div>
+                  )}
+                </div>
+                {/* Action buttons */}
+                <div className="flex justify-center gap-2 mt-auto">
+                  <Button variant="outline" onClick={() => handleEdit(m)}>
+                    <Edit /> Edit
+                  </Button>
+                  <Button onClick={() => handleOpenInfo(m)}>
+                    <Eye />
+                    Show details
+                  </Button>
+                </div>
               </div>
-              {/* Action buttons */}
-              <div className="flex justify-center gap-2 mt-auto">
-                <Button variant="outline" onClick={() => handleEdit(m)}>
-                  <Edit /> Edit
-                </Button>
-                <Button>
-                  <Eye />
-                  Show details
-                </Button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
 
         <Pagination className="mt-8" />

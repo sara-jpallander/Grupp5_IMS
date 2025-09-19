@@ -8,6 +8,7 @@ import {
 } from "../ui/dialog";
 import { Button } from "../ui/button";
 import clsx from "clsx";
+import { LoaderCircle } from "lucide-react";
 
 export default function DialogWrapper({
   isOpen,
@@ -70,7 +71,7 @@ export default function DialogWrapper({
             >
               {loading && button.showLoadingWhenDisabled ? (
                 <>
-                  <span className="animate-spin mr-2">⚪</span>
+                  <span className="animate-spin"><LoaderCircle /></span>
                   {button.loadingText || button.label}
                 </>
               ) : (
