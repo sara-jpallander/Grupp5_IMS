@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import CreateManufacturerDialog from "@/components/CreateManufacturerDialog";
+import CreateManufacturerDialog from "@/components/dialogs/CreateManufacturerDialog";
 
 export default function Manufacturers() {
   const { data: manufacturersData, refetch } = useQuery(GET_MANUFACTURERS);

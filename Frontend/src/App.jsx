@@ -23,7 +23,7 @@ function App() {
         <Route path="/products" component={Products} />
         <Route path="/manufacturers" component={Manufacturers} />
       </main>
-      <footer className="bg-gray-100 border-gray-200 border-t-1 text-center p-4">Footer produly presented by IMS5</footer>
+      <footer className="bg-gray-100 border-gray-200 border-t-1 text-center p-4">Footer proudly presented by IMS5</footer>
     </div>
   );
 }
