@@ -17,3 +17,59 @@ export const GET_PRODUCTS = gql`
     }
   }
 `;
+
+export const GET_MANUFACTURERS = gql`
+  query GetManufacturers {
+    manufacturers {
+      id
+      name
+      country
+      website
+      description
+      address
+      contact {
+        name
+        email
+        phone
+      }
+    }
+  }
+`;
+
+export const ADD_MANUFACTURER = gql`
+  mutation AddManufacturer($input: ManufacturerInput!) {
+    addManufacturer(input: $input) {
+      id
+      name
+      country
+      website
+      description
+      address
+      contact {
+        id
+        name
+        email
+        phone
+      }
+    }
+  }
+`;
+
+export const UPDATE_MANUFACTURER = gql`
+  mutation UpdateManufacturer($id: ID!, $input: UpdateManufacturerInput!) {
+    updateManufacturer(id: $id, input: $input) {
+      id
+      name
+      country
+      website
+      description
+      address
+      contact {
+        id
+        name
+        email
+        phone
+      }
+    }
+  }
+`;

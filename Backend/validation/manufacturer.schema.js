@@ -11,15 +11,21 @@ export const manufacturerSchema = z.object({
     .string()
     .min(2, "Country must be at least 2 characters")
     .max(100, "Country must be at most 100 characters")
-    .optional(),
-  website: z.string().url("Invalid URL format").optional(),
+    .optional()
+    .or(z.literal(""))
+    .or(z.null()),
+  website: z.url().optional().or(z.literal("")).or(z.null()),
   description: z
     .string()
     .max(500, "Description must be at most 500 characters")
-    .optional(),
+    .optional()
+    .or(z.literal(""))
+    .or(z.null()),
   address: z
     .string()
     .max(200, "Address must be at most 200 characters")
-    .optional(),
+    .optional()
+    .or(z.literal(""))
+    .or(z.null()),
   contact: contactSchema, // Nested validation for contact
 });
