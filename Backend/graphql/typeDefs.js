@@ -103,6 +103,7 @@ export default `#graphql
   
   type Query {
     products(page: Int = 1, limit: Int = 10): ProductPage!
+    searchProducts(query: String!): [Product!]!
     product(id: ID!): Product
     stockValue: Float
     stockValueByManufacturer: [StockValueByManufacturer]
@@ -110,6 +111,7 @@ export default `#graphql
     productCriticalStock: [Product]
 
     manufacturers(page: Int = 1, limit: Int = 10): ManufacturerPage!
+    searchManufacturers(query: String!): [Manufacturer!]!
     manufacturer(id: ID!): Manufacturer
 
     contacts: [Contact]

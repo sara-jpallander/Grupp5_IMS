@@ -22,6 +22,43 @@ export const GET_PRODUCTS = gql`
   }
 `;
 
+export const SEARCH_PRODUCTS = gql`
+  query SearchProducts($query: String!) {
+    searchProducts(query: $query) {
+      id
+      name
+    }
+  }
+`;
+
+export const ADD_PRODUCT = gql`
+  mutation AddProduct($input: ProductInput!) {
+    addProduct(input: $input) {
+      id
+      name
+      sku
+      description
+      price
+      category
+      amountInStock
+    }
+  }
+`;
+
+export const UPDATE_PRODUCT = gql`
+  mutation UpdateProduct($id: ID!, $input: UpdateProductInput!) {
+    updateProduct(id: $id, input: $input) {
+      id
+      name
+      sku
+      description
+      price
+      category
+      amountInStock
+    }
+  }
+`;
+
 export const GET_MANUFACTURERS = gql`
   query GetManufacturers($page: Int, $limit: Int) {
     manufacturers(page: $page, limit: $limit) {
@@ -40,6 +77,15 @@ export const GET_MANUFACTURERS = gql`
       }
       totalCount
       hasNextPage
+    }
+  }
+`;
+
+export const SEARCH_MANUFACTURERS = gql`
+  query SearchManufacturers($query: String!) {
+    searchManufacturers(query: $query) {
+      id
+      name
     }
   }
 `;

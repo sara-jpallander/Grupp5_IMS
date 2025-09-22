@@ -203,6 +203,12 @@ const getCriticalStock = async (_p) => {
   }
 };
 
+const search = async (_p, { query }) => {
+  return Product.find({
+    name: { $regex: query, $options: "i" }
+  }).limit(20);
+};
+
 export default {
   getAll,
   getById,
@@ -213,4 +219,5 @@ export default {
   getCriticalStock,
   getStockValue,
   getStockValueByManufacturer,
+  search
 };

@@ -165,10 +165,20 @@ const deleteById = async (_p, { id }) => {
   return manufacturer;
 };
 
+const search = async (_p, { query }) => {
+  const manufacturers = await Manufacturer.find({
+    name: { $regex: new RegExp(query, 'i') }
+  }).limit(20).populate("contact");
+
+  console.log("Search results:", manufacturers.map(m => m.name));
+  return manufacturers;
+};
+
 export default {
   getAll,
   getById,
   add,
   updateById,
   deleteById,
+  search
 };

@@ -15,7 +15,7 @@ import {
 } from "../ui/form";
 
 const formSchema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1, "Manufacturer name is required"),
   country: z.string().optional(),
   website: z.string().optional(),
   description: z.string().optional(),
