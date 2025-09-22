@@ -111,8 +111,7 @@ export default `#graphql
   type StockValueByManufacturer {
     id: ID
     name: String
-    location: String
-    contactEmail: String
+    country: String
     website: String
     totalStock: Int
     totalStockValue: Float

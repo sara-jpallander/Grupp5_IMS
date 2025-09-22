@@ -171,8 +171,7 @@ const getStockValueByManufacturer = async (_p) => {
       $project: {
         id: "$manufacturerInfo._id",
         name: "$manufacturerInfo.name",
-        location: "$manufacturerInfo.location",
-        contactEmail: "$manufacturerInfo.contactEmail",
+        country: "$manufacturerInfo.country",
         website: "$manufacturerInfo.website",
         totalStock: 1,
         totalStockValue: 1,
