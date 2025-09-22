@@ -7,8 +7,19 @@ import { manufacturerSchema } from "../../validation/manufacturer.schema.js";
 
 const idSchema = z.string().length(24, "Invalid id format");
 
-const getAll = async (_p) => {
-  return await Manufacturer.find().populate("contact");
+const getAll = async (_p, { page = 1, limit = 10 }) => {
+  const skip = (page - 1) * limit;
+
+  const [items, totalCount] = await Promise.all([
+    Manufacturer.find().skip(skip).limit(limit).populate("contact"),
+    Manufacturer.countDocuments()
+  ]);
+
+  return {
+    items,
+    totalCount,
+    hasNextPage: skip + items.length < totalCount
+  }
 };
 
 const getById = async (_P, { id }) => {

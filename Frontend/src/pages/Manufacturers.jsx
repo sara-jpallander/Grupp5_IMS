@@ -21,12 +21,21 @@ import ViewManufacturerDialog from "@/components/dialogs/ViewManufacturerDialog"
 import LoadingText from "@/components/LoadingText";
 
 export default function Manufacturers() {
+  const [page, setPage] = useState(1);
+  const limit = 9;
+  
   const {
     data: manufacturersData,
     loading,
     refetch,
-  } = useQuery(GET_MANUFACTURERS);
-  const manufacturers = manufacturersData?.manufacturers || [];
+  } = useQuery(GET_MANUFACTURERS, {
+    variables: { page, limit },
+  });
+
+  const manufacturersPage = manufacturersData?.manufacturers || {};
+  const manufacturers = manufacturersPage.items || [];
+  const totalCount = manufacturersPage.totalCount || 0;
+  const hasNextPage = manufacturersPage.hasNextPage || false;
 
   const [addManufacturer, { loading: addLoading }] =
     useMutation(ADD_MANUFACTURER);
@@ -50,7 +59,7 @@ export default function Manufacturers() {
     handleOpen();
   };
 
-  async function handleCreate(data, isEdit) {
+  const handleCreate = async (data, isEdit) => {
     try {
       if (isEdit) {
         console.log("Edit manufacturer:", data);
@@ -71,7 +80,7 @@ export default function Manufacturers() {
     } catch (error) {
       console.error("Error saving manifacturer:", error);
     }
-  }
+  };
 
   // View details modal
   const handleOpenInfo = (m) => {
@@ -83,6 +92,8 @@ export default function Manufacturers() {
     setCurrentManufacturer(null);
     setIsInfoOpen(false);
   };
+
+  const handleSetPage = (p) => setPage(p);
 
   return (
     <>
@@ -151,9 +162,13 @@ export default function Manufacturers() {
           </Select>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-6">
-          {loading ? (
-            <LoadingText label="Loading manufacturers..." className=" col-span-full" />
-          ) : (
+          {loading && (
+            <LoadingText
+              label="Loading manufacturers..."
+              className=" col-span-full"
+            />
+          )}
+          {!loading && manufacturers.length > 0 ? (
             manufacturers.map((m) => (
               <div className="border-1 p-5 flex flex-col rounded-sm" key={m.id}>
                 <div className="font-bold text-center pb-2 mb-4 border-b-1">
@@ -183,10 +198,19 @@ export default function Manufacturers() {
                 </div>
               </div>
             ))
+          ) : (
+            <div>No manufacturers found.</div>
           )}
         </div>
 
-        <Pagination className="mt-8" />
+        <Pagination
+          className="mt-8"
+          page={page}
+          hasNextPage={hasNextPage}
+          onSetPage={handleSetPage}
+          totalCount={totalCount}
+          limit={limit}
+        />
       </div>
     </>
   );

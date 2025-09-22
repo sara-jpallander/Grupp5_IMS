@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { useState } from "react";
 import { useQuery } from "@apollo/client/react";
 import { GET_PRODUCTS } from "@/api/graphql";
 import { Edit, Eye, Search } from "lucide-react";
@@ -16,14 +17,27 @@ import { Badge } from "@/components/ui/badge";
 import LoadingText from "@/components/LoadingText";
 
 export default function Products() {
-  const { data: productsData, loading, refetch } = useQuery(GET_PRODUCTS);
-  const products = productsData?.products || [];
+  const [page, setPage] = useState(1);
+  const limit = 9;
+
+  const { data: productsData, loading, refetch } = useQuery(GET_PRODUCTS, {
+    variables: { page, limit },
+  });
+
+  const productsPage = productsData?.products || {};
+  const products = productsPage.items || [];
+  const totalCount = productsPage.totalCount || 0;
+  const hasNextPage = productsPage.hasNextPage || false;
+
+  console.log(productsData)
 
   const getStockStatusColor = (value) => {
     if (value < 5) return "text-red-500";
     else if (value < 10) return "text-yellow-600";
     else return "text-emerald-600";
   };
+
+  const handleSetPage = (p) => setPage(p);
 
   return (
     <div className="max-w-4xl mx-auto p-8">
@@ -98,12 +112,10 @@ export default function Products() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-6 text-sm">
-        {loading ? (
-          <LoadingText
-            label="Loading products..."
-            className=" col-span-full"
-          />
-        ) : (
+        {loading && (
+          <LoadingText label="Loading products..." className=" col-span-full" />
+        )}
+        {!loading && products.length > 0 ? (
           products.map((product) => (
             <div
               key={product.id}
@@ -145,10 +157,19 @@ export default function Products() {
               </div>
             </div>
           ))
+        ) : (
+          <div>No products found.</div>
         )}
       </div>
 
-      <Pagination className="mt-8" />
+      <Pagination
+        className="mt-8"
+        page={page}
+        hasNextPage={hasNextPage}
+        onSetPage={handleSetPage}
+        totalCount={totalCount}
+        limit={limit}
+      />
     </div>
   );
 }

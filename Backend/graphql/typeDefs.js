@@ -12,6 +12,12 @@ export default `#graphql
     isCriticalStock: Boolean
   }
 
+  type ProductPage {
+    items: [Product!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
+  }
+
   input ProductInput {
     name: String!
     sku: String!
@@ -21,6 +27,7 @@ export default `#graphql
     manufacturer: ID!
     amountInStock: Int
   }
+  
   input UpdateProductInput {
     name: String
     sku: String
@@ -29,6 +36,22 @@ export default `#graphql
     category: String
     manufacturer: ID
     amountInStock: Int
+  }
+
+  type Manufacturer {
+    id: ID!
+    name: String!
+    country: String
+    website: String
+    description: String
+    address: String
+    contact: Contact
+  }
+
+  type ManufacturerPage {
+    items: [Manufacturer!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
   }
 
   input ManufacturerInput{
@@ -40,13 +63,20 @@ export default `#graphql
     contact: ContactInput
   }
   
-  input UpdateManufacturerInput{
+  input UpdateManufacturerInput {
     name: String
     country: String
     website: String
     description: String
     address: String
     contact: UpdateContactInput
+  }
+
+  type Contact {
+    id: ID!
+    name: String!
+    email: String!
+    phone: String
   }
 
   input ContactInput {
@@ -72,14 +102,16 @@ export default `#graphql
   }
   
   type Query {
-    products: [Product]
+    products(page: Int = 1, limit: Int = 10): ProductPage!
+    product(id: ID!): Product
     stockValue: Float
     stockValueByManufacturer: [StockValueByManufacturer]
     productLowStock: [Product]
     productCriticalStock: [Product]
-    product(id: ID!): Product
-    manufacturers: [Manufacturer]
+
+    manufacturers(page: Int = 1, limit: Int = 10): ManufacturerPage!
     manufacturer(id: ID!): Manufacturer
+
     contacts: [Contact]
     contact(id: ID!): Contact
   }
@@ -98,21 +130,5 @@ export default `#graphql
     deleteContact(id: ID!): Contact
   }
 
-  type Contact {
-    id: ID!
-    name: String!
-    email: String!
-    phone: String
-  }
-
-  type Manufacturer {
-    id: ID!
-    name: String!
-    country: String
-    website: String
-    description: String
-    address: String
-    contact: Contact
-  }
 `;
 

@@ -6,8 +6,17 @@ import { productSchema } from "../../validation/product.schema.js";
 
 const idSchema = z.string().length(24, "Invalid id format");
 
-const getAll = async (_p) => {
-  return await Product.find();
+const getAll = async (_p, { page = 1, limit = 10 }) => {
+  const skip = (page - 1) * limit;
+  const [items, totalCount] = await Promise.all([
+    Product.find().skip(skip).limit(limit),
+    Product.countDocuments()
+  ]);
+  return {
+    items,
+    totalCount,
+    hasNextPage: skip + items.length < totalCount
+  };
 };
 
 const getById = async (_p, { id }) => {
