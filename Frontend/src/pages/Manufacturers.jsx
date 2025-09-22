@@ -59,18 +59,31 @@ export default function Manufacturers() {
     handleOpen();
   };
 
+  const normalizeUrl = (url) => {
+    if (!url) return "";
+    // If the URL already starts with http:// or https://, return as is
+    if (/^https?:\/\//i.test(url)) return url;
+    // Otherwise, prepend https://
+    return "https://" + url;
+  }
+
   const handleCreate = async (data, isEdit) => {
     try {
+        const input = {
+        ...data.input,
+        website: normalizeUrl(data.input?.website?.trim()),
+      };
+
       if (isEdit) {
         console.log("Edit manufacturer:", data);
         const { data: result } = await updateManufacturer({
-          variables: data,
+          variables: { id: data.id, input },
         });
         console.log("Updated manufacturer:", result.updateManufacturer);
       } else {
         console.log("Create new manufacturer:", data);
         const { data: result } = await addManufacturer({
-          variables: data,
+          variables: { input },
         });
         console.log("Created manufacturer:", result.addManufacturer);
       }
