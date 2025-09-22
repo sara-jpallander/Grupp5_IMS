@@ -9,10 +9,10 @@ import Contact from "../models/Contact.js";
 dotenv.config();
 const MONGODB_URI = process.env.MONGODB_URI;
 
-const CONTACTS_COUNT_RANGE = [5, 5];
-const PRODUCTS_COUNT_RANGE = [1, 5];
-const PRODUCTS_PRICE_RANGE = [10, 2000];
-const PRODUCTS_STOCK_RANGE = [0, 100];
+const CONTACTS_COUNT_RANGE = [30, 30];
+const PRODUCTS_COUNT_RANGE = [50, 300];
+const PRODUCTS_PRICE_RANGE = [10, 200];
+const PRODUCTS_STOCK_RANGE = [0, 1000];
 
 const LOW_STOCK = 10;
 const CRITICAL_STOCK = 5;

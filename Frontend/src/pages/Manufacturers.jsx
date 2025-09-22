@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { Edit, Eye, Mail, Phone, Search } from "lucide-react";
 import {
@@ -23,13 +23,15 @@ import LoadingText from "@/components/LoadingText";
 export default function Manufacturers() {
   const [page, setPage] = useState(1);
   const limit = 9;
-  
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
   const {
     data: manufacturersData,
     loading,
     refetch,
   } = useQuery(GET_MANUFACTURERS, {
-    variables: { page, limit },
+    variables: { page, limit, search: debouncedSearch },
   });
 
   const manufacturersPage = manufacturersData?.manufacturers || {};
@@ -65,11 +67,11 @@ export default function Manufacturers() {
     if (/^https?:\/\//i.test(url)) return url;
     // Otherwise, prepend https://
     return "https://" + url;
-  }
+  };
 
   const handleCreate = async (data, isEdit) => {
     try {
-        const input = {
+      const input = {
         ...data.input,
         website: normalizeUrl(data.input?.website?.trim()),
       };
@@ -108,6 +110,20 @@ export default function Manufacturers() {
 
   const handleSetPage = (p) => setPage(p);
 
+  // Handle search change
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 600);
+    return () => clearTimeout(handler);
+  }, [search]);
+
   return (
     <>
       <CreateManufacturerDialog
@@ -140,13 +156,13 @@ export default function Manufacturers() {
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search..."
-              value=""
-              onChange={() => {}}
+              value={search}
+              onChange={e => handleSearchChange(e.target.value)}
               className="pl-8"
             />
           </div>
 
-          <Select>
+          {/* <Select>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sort alphabetically" />
             </SelectTrigger>
@@ -158,9 +174,9 @@ export default function Manufacturers() {
               <SelectItem value="germany">Total stock</SelectItem>
               <SelectItem value="usa">Stock value</SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
 
-          <Select>
+          {/* <Select>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by country" />
             </SelectTrigger>
@@ -172,7 +188,7 @@ export default function Manufacturers() {
               <SelectItem value="japan">Japan</SelectItem>
               <SelectItem value="china">China</SelectItem>
             </SelectContent>
-          </Select>
+          </Select> */}
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-6">
           {loading && (
@@ -215,6 +231,8 @@ export default function Manufacturers() {
             <div>No manufacturers found.</div>
           )}
         </div>
+
+        <div className="text-sm text-gray-500 text-right mt-4">Showing {totalCount} manufacturers</div>
 
         <Pagination
           className="mt-8"

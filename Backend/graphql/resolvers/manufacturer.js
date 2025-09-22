@@ -7,12 +7,19 @@ import { manufacturerSchema } from "../../validation/manufacturer.schema.js";
 
 const idSchema = z.string().length(24, "Invalid id format");
 
-const getAll = async (_p, { page = 1, limit = 10 }) => {
+const getAll = async (_p, { page = 1, limit = 10, search }) => {
   const skip = (page - 1) * limit;
 
+  const filter = {};
+
+  // Filter by search term
+  if (search && search.trim() !== "") {
+    filter.name = { $regex: search, $options: "i" };
+  }
+
   const [items, totalCount] = await Promise.all([
-    Manufacturer.find().skip(skip).limit(limit).populate("contact"),
-    Manufacturer.countDocuments()
+    Manufacturer.find(filter).sort({ name: 1 }).skip(skip).limit(limit).populate("contact"),
+    Manufacturer.countDocuments(filter)
   ]);
 
   return {
@@ -160,18 +167,7 @@ const deleteById = async (_p, { id }) => {
     manufacturer.contact
   );
 
-  // console.log(`Deleted ${manufacturer} and contact details: ${manufacturerContact} successfully.`);
-
   return manufacturer;
-};
-
-const search = async (_p, { query }) => {
-  const manufacturers = await Manufacturer.find({
-    name: { $regex: new RegExp(query, 'i') }
-  }).limit(20).populate("contact");
-
-  console.log("Search results:", manufacturers.map(m => m.name));
-  return manufacturers;
 };
 
 export default {
@@ -179,6 +175,5 @@ export default {
   getById,
   add,
   updateById,
-  deleteById,
-  search
+  deleteById
 };

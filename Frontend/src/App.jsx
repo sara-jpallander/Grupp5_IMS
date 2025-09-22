@@ -4,6 +4,7 @@ import "./app.css";
 import { Button } from "./components/ui/button";
 import Manufacturers from "./pages/Manufacturers";
 import Products from "./pages/Products";
+import CriticalStock from "./pages/CriticalStock";
 
 function App() {
   return (
@@ -13,7 +14,8 @@ function App() {
           <div className="font-black text-xl tracking-widest">IMS5</div>
           <ul className="flex gap-2">
           <li><Link href="/"><Button variant="link">Home</Button></Link></li>
-          <li><Link href="/products"><Button variant="link">Products</Button></Link></li>
+          <li><Link href="/products"><Button variant="link">All Products</Button></Link></li>
+          <li><Link href="/critical-stock"><Button variant="link">Critical Stock</Button></Link></li>
           <li><Link href="/manufacturers"><Button variant="link">Manufacturers</Button></Link></li>
           </ul>
         </nav>
@@ -21,6 +23,7 @@ function App() {
       <main className="flex-1">
         <Route path="/" component={Home} />
         <Route path="/products" component={Products} />
+        <Route path="/critical-stock" component={CriticalStock} />
         <Route path="/manufacturers" component={Manufacturers} />
       </main>
       <footer className="bg-gray-100 border-gray-200 border-t-1 text-center p-4">Footer proudly presented by IMS5</footer>

@@ -1,8 +1,8 @@
 import { gql } from "@apollo/client";
 
 export const GET_PRODUCTS = gql`
-  query GetProducts($page: Int, $limit: Int) {
-    products(page: $page, limit: $limit) {
+  query GetProducts($page: Int, $limit: Int, $sortBy: ProductSortOption, $search: String) {
+    products(page: $page, limit: $limit, sortBy: $sortBy, search: $search) {
       items {
         id
         name
@@ -29,6 +29,28 @@ export const SEARCH_PRODUCTS = gql`
       name
     }
   }
+`;
+
+export const GET_CRITICAL_STOCK = gql`
+    query GetCriticalStock($page: Int, $limit: Int) {
+      productCriticalStock(page: $page, limit: $limit) {
+        items {
+          id
+          name
+          sku
+          price
+          amountInStock
+          manufacturer
+          contact {
+            name
+            email
+            phone
+          }
+        }
+        totalCount
+        hasNextPage
+      }
+    }
 `;
 
 export const ADD_PRODUCT = gql`
@@ -60,8 +82,8 @@ export const UPDATE_PRODUCT = gql`
 `;
 
 export const GET_MANUFACTURERS = gql`
-  query GetManufacturers($page: Int, $limit: Int) {
-    manufacturers(page: $page, limit: $limit) {
+  query GetManufacturers($page: Int, $limit: Int, $search: String) {
+    manufacturers(page: $page, limit: $limit, search: $search) {
       items {
         id
         name

@@ -11,9 +11,27 @@ import {
 export default function Pagination({ className, page, hasNextPage, onSetPage, totalCount, limit }) {
   const totalPages = totalCount ? Math.ceil(totalCount / limit) : page + (hasNextPage ? 1 : 0);
   
-  const pages = [];
+  // Only show 5 pages at a time, with ellipsis
+  let pages = [];
+  if (totalPages <= 5) {
     for (let i = 1; i <= totalPages; i++) {
       pages.push(i);
+    }
+  } else {
+    // Always show first and last
+    const left = Math.max(2, page - 1);
+    const right = Math.min(totalPages - 1, page + 1);
+    pages = [1];
+    if (left > 2) {
+      pages.push('left-ellipsis');
+    }
+    for (let i = left; i <= right; i++) {
+      pages.push(i);
+    }
+    if (right < totalPages - 1) {
+      pages.push('right-ellipsis');
+    }
+    pages.push(totalPages);
   }
 
   return (
@@ -27,17 +45,26 @@ export default function Pagination({ className, page, hasNextPage, onSetPage, to
             disabled={page === 1}
           />
         </PaginationItem>
-        {pages.map(p => (
-          <PaginationItem key={p}>
-            <PaginationLink
-              href="#"
-              isActive={p === page}
-              onClick={e => { e.preventDefault(); onSetPage(p); }}
-            >
-              {p}
-            </PaginationLink>
-          </PaginationItem>
-        ))}
+        {pages.map((p, idx) => {
+          if (p === 'left-ellipsis' || p === 'right-ellipsis') {
+            return (
+              <PaginationItem key={p + idx}>
+                <PaginationEllipsis />
+              </PaginationItem>
+            );
+          }
+          return (
+            <PaginationItem key={p}>
+              <PaginationLink
+                href="#"
+                isActive={p === page}
+                onClick={e => { e.preventDefault(); onSetPage(p); }}
+              >
+                {p}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        })}
         {/* <PaginationItem>
           <PaginationEllipsis />
         </PaginationItem> */}

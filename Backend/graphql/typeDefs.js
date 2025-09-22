@@ -1,4 +1,5 @@
 export default `#graphql
+
   type Product {
     id: ID!
     name: String!
@@ -10,6 +11,22 @@ export default `#graphql
     amountInStock: Int
     isLowStock: Boolean
     isCriticalStock: Boolean
+  }
+
+  type CriticalStockProduct {
+    id: ID!
+    name: String!
+    sku: String!
+    price: Float
+    amountInStock: Int
+    manufacturer: String
+    contact: Contact
+  }
+
+  type CriticalProductPage {
+    items: [CriticalStockProduct!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
   }
 
   type ProductPage {
@@ -101,17 +118,23 @@ export default `#graphql
     totalStockValue: Float
   }
   
+  enum ProductSortOption {
+    NAME_ASC
+    PRICE_ASC
+    PRICE_DESC
+    STOCK_ASC
+    STOCK_DESC
+  }
+
   type Query {
-    products(page: Int = 1, limit: Int = 10): ProductPage!
-    searchProducts(query: String!): [Product!]!
+    products(page: Int = 1, limit: Int = 10, sortBy: ProductSortOption = NAME_ASC, search: String): ProductPage!
     product(id: ID!): Product
     stockValue: Float
     stockValueByManufacturer: [StockValueByManufacturer]
     productLowStock: [Product]
-    productCriticalStock: [Product]
+    productCriticalStock(page: Int = 1, limit: Int = 10): CriticalProductPage!
 
-    manufacturers(page: Int = 1, limit: Int = 10): ManufacturerPage!
-    searchManufacturers(query: String!): [Manufacturer!]!
+    manufacturers(page: Int = 1, limit: Int = 10, search: String): ManufacturerPage!
     manufacturer(id: ID!): Manufacturer
 
     contacts: [Contact]
@@ -131,6 +154,4 @@ export default `#graphql
     updateContact(id: ID!, input: UpdateContactInput!): Contact
     deleteContact(id: ID!): Contact
   }
-
 `;
-

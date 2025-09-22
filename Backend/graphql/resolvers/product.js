@@ -6,12 +6,43 @@ import { productSchema } from "../../validation/product.schema.js";
 
 const idSchema = z.string().length(24, "Invalid id format");
 
-const getAll = async (_p, { page = 1, limit = 10 }) => {
+const getAll = async (_p, { page = 1, limit = 10, sortBy = "NAME_ASC", search }) => {
   const skip = (page - 1) * limit;
+  let sort = {};
+
+  // Sorting options
+  switch (sortBy) {
+    case "NAME_ASC":
+      sort = { name: 1 };
+      break;
+    case "PRICE_ASC":
+      sort = { price: 1 };
+      break;
+    case "PRICE_DESC":
+      sort = { price: -1 };
+      break;
+    case "STOCK_ASC":
+      sort = { amountInStock: 1 };
+      break;
+    case "STOCK_DESC":
+      sort = { amountInStock: -1 };
+      break;
+    default:
+      sort = { name: 1 };
+  }
+
+  const filter = {};
+
+  // Filter by search term
+  if (search && search.trim() !== "") {
+    filter.name = { $regex: search, $options: "i" };
+  }
+
   const [items, totalCount] = await Promise.all([
-    Product.find().skip(skip).limit(limit),
-    Product.countDocuments()
+    Product.find(filter).sort(sort).skip(skip).limit(limit),
+    Product.countDocuments(filter)
   ]);
+
   return {
     items,
     totalCount,
@@ -160,9 +191,11 @@ const getLowStock = async (_p) => {
   return result;
 };
 
-const getCriticalStock = async (_p) => {
+const getCriticalStock = async (_p, { page = 1, limit = 10 }) => {
   try {
-    const result = await Product.aggregate([
+    const skip = (page - 1) * limit;
+    // Get all critical stock products
+    const all = await Product.aggregate([
       { $match: { amountInStock: { $lt: 5 } } },
       {
         $lookup: {
@@ -182,8 +215,10 @@ const getCriticalStock = async (_p) => {
         },
       },
       { $unwind: "$contactInfo" },
+      { $sort: { amountInStock: 1 } },
       {
         $project: {
+          id: "$_id",
           name: "$name",
           sku: "$sku",
           price: "$price",
@@ -197,16 +232,17 @@ const getCriticalStock = async (_p) => {
         },
       },
     ]);
-    return result;
+    const totalCount = all.length;
+    const items = all.slice(skip, skip + limit);
+    return {
+      items,
+      totalCount,
+      hasNextPage: skip + items.length < totalCount
+    };
   } catch (error) {
-    console.log("ERROOOOOR");
+    console.log("ERROOOOOR", error);
+    throw new GraphQLError("Failed to fetch critical stock");
   }
-};
-
-const search = async (_p, { query }) => {
-  return Product.find({
-    name: { $regex: query, $options: "i" }
-  }).limit(20);
 };
 
 export default {
@@ -218,6 +254,5 @@ export default {
   getLowStock,
   getCriticalStock,
   getStockValue,
-  getStockValueByManufacturer,
-  search
+  getStockValueByManufacturer
 };

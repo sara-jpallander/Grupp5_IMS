@@ -5,14 +5,12 @@ import contact from "./resolvers/contact.js";
 export default {
   Query: {
     products: product.getAll,
-    searchProducts: product.search,
     productLowStock: product.getLowStock,
     productCriticalStock: product.getCriticalStock,
     stockValue: product.getStockValue,
     stockValueByManufacturer: product.getStockValueByManufacturer,
     product: product.getById,
     manufacturers: manufacturer.getAll,
-    searchManufacturers: manufacturer.search,
     manufacturer: manufacturer.getById,
     contacts: contact.getAll,
     contact: contact.getById,

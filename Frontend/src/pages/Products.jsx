@@ -1,8 +1,9 @@
 import clsx from "clsx";
 import { useState } from "react";
+import { useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client/react";
 import { GET_PRODUCTS, ADD_PRODUCT, UPDATE_PRODUCT } from "@/api/graphql";
-import { Edit, Eye, Search } from "lucide-react";
+import { ArrowDown10, ArrowDownAZ, ArrowUp01, BanknoteArrowDown, BanknoteArrowUp, CircleDollarSign, Edit, Eye, Search } from "lucide-react";
 import { Button } from "../components/ui/button";
 import Pagination from "@/components/Pagination";
 import { Input } from "@/components/ui/input";
@@ -21,10 +22,13 @@ import { getStockStatusColor } from "@/lib/utils";
 
 export default function Products() {
   const [page, setPage] = useState(1);
-  const limit = 9;
+  const limit = 15;
+  const [sortBy, setSortBy] = useState("NAME_ASC");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const { data: productsData, loading } = useQuery(GET_PRODUCTS, {
-    variables: { page, limit },
+  const { data: productsData, loading, refetch } = useQuery(GET_PRODUCTS, {
+    variables: { page, limit, sortBy, search: debouncedSearch },
   });
 
   const productsPage = productsData?.products || {};
@@ -32,8 +36,7 @@ export default function Products() {
   const totalCount = productsPage.totalCount || 0;
   const hasNextPage = productsPage.hasNextPage || false;
 
-  const [addProduct, { loading: addLoading }] =
-    useMutation(ADD_PRODUCT);
+  const [addProduct, { loading: addLoading }] = useMutation(ADD_PRODUCT);
   const [updateProduct, { loading: updateLoading }] =
     useMutation(UPDATE_PRODUCT);
 
@@ -60,14 +63,14 @@ export default function Products() {
         console.log("Edit product:", data);
         const { data: result } = await updateProduct({
           variables: data,
-          refetchQueries: [{ query: GET_PRODUCTS, variables: { page, limit } }],
+          refetchQueries: [{ query: GET_PRODUCTS, variables: { page, limit, sortBy } }],
         });
         console.log("Updated product:", result.updateProduct);
       } else {
         console.log("Create new product:", data);
         const { data: result } = await addProduct({
           variables: data,
-          refetchQueries: [{ query: GET_PRODUCTS, variables: { page, limit } }],
+          refetchQueries: [{ query: GET_PRODUCTS, variables: { page, limit, sortBy } }],
         });
         console.log("Created product:", result.addProduct);
       }
@@ -90,6 +93,27 @@ export default function Products() {
 
   const handleSetPage = (p) => setPage(p);
 
+  // Handle sort change
+  const handleSortChange = (value) => {
+    setSortBy(value);
+    setPage(1); // Reset to first page on sort change
+    refetch({ page: 1, limit, sortBy: value, search });
+  };
+
+  // Handle search change
+  const handleSearchChange = (value) => {
+    setSearch(value);
+    setPage(1);
+  };
+
+  // Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+    }, 600);
+    return () => clearTimeout(handler);
+  }, [search]);
+
   return (
     <>
       <CreateProductDialog
@@ -104,16 +128,17 @@ export default function Products() {
         onClose={onCloseInfo}
         data={currentProduct}
       />
-    
+
       <div className="max-w-4xl mx-auto p-8">
         <div className="flex gap-4 justify-between">
           <h1 className="text-4xl font-bold mb-4">Products</h1>
           <Button onClick={handleOpen}>+ New product</Button>
         </div>
         <p className="mb-4">
-          Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente odit,
-          fugiat, quae maxime dolor officiis ab optio esse repellendus libero
-          adipisci quasi similique et numquam beatae! In laudantium eius ex?
+          Lorem ipsum dolor sit amet consectetur adipisicing elit. Sapiente
+          odit, fugiat, quae maxime dolor officiis ab optio esse repellendus
+          libero adipisci quasi similique et numquam beatae! In laudantium eius
+          ex?
         </p>
 
         <div className="flex items-center gap-2">
@@ -121,13 +146,24 @@ export default function Products() {
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search..."
-              value=""
-              onChange={() => {}}
+              value={search}
+              onChange={e => handleSearchChange(e.target.value)}
               className="pl-8"
             />
           </div>
-
-          <Select>
+          <Select value={sortBy} onValueChange={handleSortChange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="NAME_ASC"><ArrowDownAZ /> Sort alphabetically</SelectItem>
+              <SelectItem value="PRICE_ASC"><BanknoteArrowUp /> Price: Low to High</SelectItem>
+              <SelectItem value="PRICE_DESC"><BanknoteArrowDown /> Price: High to Low</SelectItem>
+              <SelectItem value="STOCK_ASC"><ArrowUp01 /> Stock: Low to High</SelectItem>
+              <SelectItem value="STOCK_DESC"><ArrowDown10 /> Stock: High to Low</SelectItem>
+            </SelectContent>
+          </Select>
+          {/* <Select>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Manufacturer" />
             </SelectTrigger>
@@ -138,19 +174,8 @@ export default function Products() {
               <SelectItem value="ericsson">Ericsson</SelectItem>
               <SelectItem value="hm">H&M</SelectItem>
             </SelectContent>
-          </Select>
-          <Select>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Stock status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All status</SelectItem>
-              <SelectItem value="fine">Fine</SelectItem>
-              <SelectItem value="low">Low</SelectItem>
-              <SelectItem value="critical">Critical</SelectItem>
-            </SelectContent>
-          </Select>
-          <Select>
+          </Select> */}
+          {/* <Select>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
@@ -160,25 +185,15 @@ export default function Products() {
               <SelectItem value="tech">Technology</SelectItem>
               <SelectItem value="furniture">Furniture</SelectItem>
             </SelectContent>
-          </Select>
-        </div>
-
-        <div className="flex mb-6">
-          <Select>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Sort alphabetically" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="alphabetically">Sort alphabetically</SelectItem>
-              <SelectItem value="price">Sort by price</SelectItem>
-              <SelectItem value="stock">Sort by stock</SelectItem>
-            </SelectContent>
-          </Select>
+          </Select> */}
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 mt-6 text-sm">
           {loading && (
-            <LoadingText label="Loading products..." className=" col-span-full" />
+            <LoadingText
+              label="Loading products..."
+              className=" col-span-full"
+            />
           )}
           {!loading && products.length > 0 ? (
             products.map((product) => (
@@ -226,6 +241,8 @@ export default function Products() {
             <div>No products found.</div>
           )}
         </div>
+
+        <div className="text-sm text-gray-500 text-right mt-4">Showing {totalCount} products</div>
 
         <Pagination
           className="mt-8"
