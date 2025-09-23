@@ -22,7 +22,7 @@ import LoadingText from "@/components/LoadingText";
 
 export default function Manufacturers() {
   const [page, setPage] = useState(1);
-  const limit = 9;
+  const limit = 12;
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
 

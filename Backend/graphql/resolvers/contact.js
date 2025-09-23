@@ -1,45 +1,27 @@
 import Contact from "../../models/Contact.js";
-import { GraphQLError } from "graphql";
-// import { z } from "zod";
-// import { contactSchema } from "../../validation/contact.schema.js";
-
-// const idSchema = z.string().length(24, "Invalid id format");
+import { GQLError, zodToBadInput } from "../../utils/errors.js";
 
 const getAll = async (_p) => {
   try {
     return await Contact.find();
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to retrieve all contacts", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to retrieve all contacts");
   }
 };
 
 const getById = async (_P, { id }) => {
   try {
+    // Validate ID
     const parsedId = idSchema.safeParse(id);
-    if (!parsedId.success) {
-      throw new GraphQLError(
-        "Invalid id: " + JSON.stringify(parsedId.error.errors)
-      );
-    }
-    const contact = await Contact.findById(id);
+    if (!parsedId.success) throw zodToBadInput("Invalid id", parsedId.error);
 
-    if (!contact) {
-      throw new GraphQLError("Contact not found", {
-        extensions: { code: "404_NOT_FOUND" },
-      });
-    }
+    // Get contact
+    const contact = await Contact.findById(id);
+    if (!contact) throw GQLError.notFound("Contact not found");
 
     return contact;
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to retrieve contact", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to retrieve contact");
   }
 };
 

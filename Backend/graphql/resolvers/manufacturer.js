@@ -1,4 +1,3 @@
-import { GraphQLError } from "graphql";
 import Manufacturer from "../../models/Manufacturer.js";
 import Contact from "../../models/Contact.js";
 import { z } from "zod";
@@ -35,60 +34,47 @@ const getAll = async (_p, { page = 1, limit = 10, search }) => {
       hasNextPage: skip + items.length < totalCount,
     };
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to retrieve all manufacturers", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to retrieve all manufacturers");
   }
 };
 
 const getById = async (_P, { id }) => {
+  // Validate ID
   const parsedId = idSchema.safeParse(id);
+  if (!parsedId.success) throw zodToBadInput("Invalid id", parsedId.error);
 
-  if (!parsedId.success) {
-      throw zodToBadInput("Invalid id", parsedId.error);
-
-  }
   try {
+    // Does manufacturer exist?
     const manufacturer = await Manufacturer.findById(id).populate("contact");
-
-  if (!manufacturer) {
-    throw GQLError.notFound("Manufacturer not found");
-  }
+    if (!manufacturer) throw GQLError.notFound("Manufacturer not found");
 
     return manufacturer;
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to retrieve manufacturer by ID", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to retrieve manufacturer by ID");
   }
 };
 
 const add = async (_p, { input }) => {
-  try {
-    const parsed = manufacturerSchema.safeParse(input);
+  // Validate input
+  const parsed = manufacturerSchema.safeParse(input);
+  if (!parsed.success) throw zodToBadInput("Manufacturer validation failed", parsed.error);
 
-  if (!parsed.success) {
-       throw zodToBadInput("Manufacturer validation failed", parsed.error);
-  }
-
-   const exists = await Manufacturer.findOne({ name: parsed.data.name });
-    if (exists) {
-    throw GQLError.conflict("Manufacturer with this name already exists");
-  }
+  // Check if name already exists
+  const exists = await Manufacturer.findOne({ name: parsed.data.name });
+  if (exists) throw GQLError.conflict("Manufacturer with this name already exists");
 
   try {
+    // Create contact
     const contactDoc = await Contact.create(parsed.data.contact);
     const { contact, ...manufacturerData } = parsed.data;
 
+    // Create manufacturer
     let manufacturer = await Manufacturer.create({
       ...manufacturerData,
       contact: contactDoc._id,
     });
 
+    // Populate manufacturer with contact
     manufacturer = await Manufacturer.findById(manufacturer._id).populate("contact");
     return manufacturer;
   } catch (error) {
@@ -103,29 +89,18 @@ const add = async (_p, { input }) => {
 const updateById = async (_p, { id, input }) => {
   // Validate ID parameter
   const parsedId = idSchema.safeParse(id);
-
-  if (!parsedId.success) {
-        throw zodToBadInput("Invalid id", parsedId.error);
-
-  }
+  if (!parsedId.success) throw zodToBadInput("Invalid id", parsedId.error);
 
   const manufacturer = await Manufacturer.findById(id);
 
   // Manufacturer with ID cannot be found
-  if (!manufacturer) {
-      throw GQLError.notFound("Manufacturer not found");
-
-  }
+  if (!manufacturer) throw GQLError.notFound("Manufacturer not found");
 
   try {
     // Validate contact (if present)
     if (input.contact && manufacturer.contact) {
       const contactParsed = contactSchema.partial().safeParse(input.contact);
-
-      if (!contactParsed.success) {
-          throw zodToBadInput("Contact validation failed", contactParsed.error);
-
-      }
+      if (!contactParsed.success) throw zodToBadInput("Contact validation failed", contactParsed.error);
 
       // Update contact
       await Contact.findByIdAndUpdate(
@@ -146,10 +121,7 @@ const updateById = async (_p, { id, input }) => {
       .partial()
       .safeParse(manufacturerData);
 
-    if (!manufacturerParsed.success) {
-           throw zodToBadInput("Manufacturer validation failed", manufacturerParsed.error);
-
-    }
+    if (!manufacturerParsed.success) throw zodToBadInput("Manufacturer validation failed", manufacturerParsed.error);
 
     // Update manufacturer
     const updatedManufacturer = await Manufacturer.findByIdAndUpdate(
@@ -172,33 +144,18 @@ const updateById = async (_p, { id, input }) => {
 const deleteById = async (_p, { id }) => {
   try {
     const parsedId = idSchema.safeParse(id);
-    if (!parsedId.success) {
-      throw new GraphQLError(
-        "Invalid id: " + JSON.stringify(parsedId.error.errors)
-      );
-    }
-    let manufacturer = await Manufacturer.findByIdAndDelete(id).populate(
-      "contact"
-    );
+    if (!parsedId.success) throw zodToBadInput("Invalid id", parsedId.error);
 
-    if (!manufacturer) {
-      throw new GraphQLError("Manufacturer not found", {
-        extensions: { code: "404_NOT_FOUND" },
-      });
-    }
+    // Delete manufacturer
+    let manufacturer = await Manufacturer.findByIdAndDelete(id).populate("contact");
+    if (!manufacturer) throw GQLError.notFound("Manufacturer not found");
 
     // Delete contact
-    const manufacturerContact = await Contact.findByIdAndDelete(
-      manufacturer.contact
-    );
+    const manufacturerContact = await Contact.findByIdAndDelete(manufacturer.contact);
 
     return manufacturer;
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to delete manufacturer", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to delete manufacturer");
   }
 };
 

@@ -11,7 +11,7 @@ import Pagination from "@/components/Pagination";
 
 export default function CriticalStock() {
   const [page, setPage] = useState(1);
-  const limit = 9;
+  const limit = 10;
 
   const { data, loading } = useQuery(GET_CRITICAL_STOCK, {
     variables: { page, limit },
