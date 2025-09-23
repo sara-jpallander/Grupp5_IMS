@@ -207,9 +207,14 @@ export default function Products() {
                     {product.category}
                   </Badge>
                 </div>
-                <div className="text-gray-400 text-[.6rem] mb-2">
+                <div className="text-gray-400 text-[.6rem] mb-1">
                   {product.sku}
                 </div>
+                {product.manufacturer?.name && (
+                  <div className="text-gray-500 text-[.6rem] mb-2">
+                    by {product.manufacturer.name}
+                  </div>
+                )}
 
                 <div className="text-gray-700 text-[.7rem] truncate">
                   {product.description}

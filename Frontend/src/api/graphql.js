@@ -10,14 +10,42 @@ export const GET_PRODUCTS = gql`
         description
         price
         category
-        # Todo: populate product with manufacturer?
-        # manufacturer {
-        #   name
-        # }
+        manufacturer {
+          id
+          name
+        }
         amountInStock
       }
       totalCount
       hasNextPage
+    }
+  }
+`;
+
+export const GET_PRODUCT_WITH_MANUFACTURER = gql`
+  query GetProductWithManufacturer($id: ID!) {
+    product(id: $id) {
+      id
+      name
+      sku
+      description
+      price
+      category
+      manufacturer {
+        id
+        name
+        country
+        website
+        description
+        address
+        contact {
+          id
+          name
+          email
+          phone
+        }
+      }
+      amountInStock
     }
   }
 `;
@@ -62,6 +90,10 @@ export const ADD_PRODUCT = gql`
       description
       price
       category
+      manufacturer {
+        id
+        name
+      }
       amountInStock
     }
   }
@@ -76,6 +108,10 @@ export const UPDATE_PRODUCT = gql`
       description
       price
       category
+      manufacturer {
+        id
+        name
+      }
       amountInStock
     }
   }

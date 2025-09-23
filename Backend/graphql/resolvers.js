@@ -1,6 +1,7 @@
 import product from "./resolvers/product.js";
 import manufacturer from "./resolvers/manufacturer.js";
 import contact from "./resolvers/contact.js";
+import Manufacturer from "../models/Manufacturer.js";
 
 export default {
   Query: {
@@ -32,6 +33,10 @@ export default {
     id: (doc) => String(doc._id),
     isLowStock: (doc) => (doc.amountInStock < 10 ? true : false),
     isCriticalStock: (doc) => (doc.amountInStock < 5 ? true : false),
+    manufacturer: async (doc) => {
+      if (!doc.manufacturer) return null;
+      return await Manufacturer.findById(doc.manufacturer).populate('contact');
+    },
   },
 
   Manufacturer: {
