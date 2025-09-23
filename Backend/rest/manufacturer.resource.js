@@ -6,7 +6,6 @@ import { z } from "zod";
 import { manufacturerSchema } from "../validation/manufacturer.schema.js";
 
 const idSchema = z.string().length(24, "Invalid id format");
-
 const router = express.Router();
 
 // ROUTES
@@ -20,14 +19,17 @@ router.delete("/:id", deleteManufacturer);
 async function createManufacturer(req, res) {
   // Validate the nested contact object
   const contactParsed = contactSchema.safeParse(req.body.contact);
+
   if (!contactParsed.success) {
     return res.status(400).json({
       error: "Contact validation failed",
       details: contactParsed.error.errors,
     });
   }
+
   // Validate the manufacturer object (including the nested contact)
   const manufacturerParsed = manufacturerSchema.safeParse(req.body);
+
   if (!manufacturerParsed.success) {
     return res.status(400).json({
       error: "Manufacturer validation failed",
@@ -70,18 +72,36 @@ async function createManufacturer(req, res) {
   }
 }
 
-// GET ALL
+// GET ALL with pagination, search, and contact population
 async function getAllManufacturers(req, res) {
   try {
-    const manufacturers = await Manufacturer.find();
+    const page = parseInt(req.query.page, 10) || 1;
+    const limit = parseInt(req.query.limit, 10) || 10;
+    const skip = (page - 1) * limit;
+    const search = req.query.search || "";
 
-    if (!manufacturers) {
-      return res.status(404).json({ message: "Manufacturers not found." });
+    const filter = {};
+    if (search.trim() !== "") {
+      filter.name = { $regex: search, $options: "i" };
     }
 
-    res
-      .status(200)
-      .json({ message: "All manufacturers: ", data: manufacturers });
+    const [items, totalCount] = await Promise.all([
+      Manufacturer.find(filter)
+        .sort({ name: 1 })
+        .skip(skip)
+        .limit(limit)
+        .populate("contact"),
+      Manufacturer.countDocuments(filter),
+    ]);
+
+    res.status(200).json({
+      message: "All manufacturers (paginated): ",
+      data: {
+        items,
+        totalCount,
+        hasNextPage: skip + items.length < totalCount,
+      },
+    });
   } catch (error) {
     res.status(500).json({
       message: "Internal server error. Failed to get all manufacturers.",
@@ -100,7 +120,10 @@ async function getManufacturer(req, res) {
         .status(400)
         .json({ error: "Invalid ID format", details: parsedId.error.errors });
     }
-    const manufacturer = await Manufacturer.findById(req.params.id);
+
+    const manufacturer = await Manufacturer.findById(req.params.id).populate(
+      "contact"
+    );
 
     if (!manufacturer) {
       return res.status(404).json({ message: "Could not find manufacturer." });
@@ -122,37 +145,78 @@ async function getManufacturer(req, res) {
 async function updateManufacturer(req, res) {
   // Validate ID parameter
   const parsedId = idSchema.safeParse(req.params.id);
+
   if (!parsedId.success) {
     return res
       .status(400)
       .json({ error: "Invalid ID format", details: parsedId.error.errors });
   }
-  // Validate request body using Zod schema
+
   const parsed = manufacturerSchema.partial().safeParse(req.body);
+  // Failed to validate input
   if (!parsed.success) {
-    // If validation fails, return 400 with error details.
     return res
       .status(400)
       .json({ error: "Validation failed", details: parsed.error.errors });
   }
-  try {
-    const manufacturer = await Manufacturer.findByIdAndUpdate(
-      req.params.id,
-      parsed.data,
-      {
-        new: true,
-        runValidators: true,
-      }
-    );
 
-    if (!manufacturer) {
-      return res.status(404).json({ message: "Could not find manufacturer." });
+  // Manufacturer with ID cannot be found
+  let manufacturer = await Manufacturer.findById(req.params.id);
+  
+  if (!manufacturer) {
+    return res.status(404).json({ message: "Could not find manufacturer." });
+  }
+
+  try {
+    // Validate contact (if present)
+    if (req.body.contact && manufacturer.contact) {
+      const contactParsed = contactSchema.partial().safeParse(req.body.contact);
+      if (!contactParsed.success) {
+        return res.status(400).json({
+          error: "Contact validation failed",
+          details: contactParsed.error.errors,
+        });
+      }
+      // Update contact
+      await Contact.findByIdAndUpdate(
+        manufacturer.contact,
+        contactParsed.data,
+        {
+          runValidators: true,
+          new: true,
+        }
+      );
     }
+
+    // Validate manufacturer (excluding contact)
+    const { contact, ...manufacturerData } = req.body;
+    const manufacturerParsed = manufacturerSchema
+      .omit({ contact: true })
+      .partial()
+      .safeParse(manufacturerData);
+
+    if (!manufacturerParsed.success) {
+      return res.status(400).json({
+        error: "Manufacturer validation failed",
+        details: manufacturerParsed.error.errors,
+      });
+    }
+
+    // Update manufacturer
+    const updatedManufacturer = await Manufacturer.findByIdAndUpdate(
+      req.params.id,
+      manufacturerParsed.data,
+      {
+        runValidators: true,
+        new: true,
+      }
+    ).populate("contact");
 
     res
       .status(200)
-      .json({ message: "Manufacturer updated: ", data: manufacturer });
+      .json({ message: "Manufacturer updated: ", data: updatedManufacturer });
   } catch (error) {
+    console.error("Error updating manufacturer:", error);
     res.status(500).json({
       message: "Internal server error. Failed to update manufacturer by ID.",
       error,
@@ -170,11 +234,17 @@ async function deleteManufacturer(req, res) {
       .json({ error: "Invalid ID format", details: parsedId.error.errors });
   }
   try {
-    const manufacturer = await Manufacturer.findByIdAndDelete(req.params.id);
+    const manufacturer = await Manufacturer.findByIdAndDelete(
+      req.params.id
+    ).populate("contact");
 
     if (!manufacturer) {
       return res.status(404).json({ message: "Could not find manufacturer." });
     }
+
+    const manufacturerContact = await Contact.findByIdAndDelete(
+      manufacturer.contact
+    );
 
     res
       .status(200)

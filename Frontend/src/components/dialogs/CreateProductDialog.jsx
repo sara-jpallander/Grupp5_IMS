@@ -82,8 +82,10 @@ export default function CreateProductDialog({
   };
 
   useEffect(() => {
-    if (isOpen && allManufacturers.length === 0) {
-      // Load manufacturers when dialog opens (only if not already loaded)
+    if (isOpen) {
+      // Always load manufacturers when dialog opens to ensure we have the latest data
+      // This helps with the case where we're editing a product with a manufacturer 
+      // that might not be in the current list
       getManufacturers()
         .then((result) => {
           // Manually set the data if onCompleted didn't fire
@@ -96,7 +98,7 @@ export default function CreateProductDialog({
         });
       setSearch("");
     }
-  }, [isOpen, allManufacturers.length, getManufacturers]);
+  }, [isOpen, getManufacturers]);
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -105,6 +107,18 @@ export default function CreateProductDialog({
 
   useEffect(() => {
     if (editData) {
+      const manufacturerId = typeof editData.manufacturer === 'object' 
+        ? editData.manufacturer?.id 
+        : editData.manufacturer;
+      
+      // If the product has a manufacturer and it's not in the list, add it
+      if (editData.manufacturer && typeof editData.manufacturer === 'object') {
+        const manufacturerExists = allManufacturers.some(m => m.id === editData.manufacturer.id);
+        if (!manufacturerExists) {
+          setAllManufacturers(prev => [...prev, editData.manufacturer]);
+        }
+      }
+      
       form.reset({
         name: editData.name || "",
         sku: editData.sku || "",
@@ -112,12 +126,12 @@ export default function CreateProductDialog({
         price: editData.price || 0,
         category: editData.category || "",
         amountInStock: editData.amountInStock || "",
-        manufacturer: editData.manufacturer || "",
+        manufacturer: manufacturerId || "",
       });
     } else {
       form.reset(defaultValues);
     }
-  }, [editData, form]);
+  }, [editData, form, allManufacturers]);
 
   async function handleFormSubmit(data) {
     const input = {
@@ -217,13 +231,14 @@ export default function CreateProductDialog({
                           variant="outline"
                           role="combobox"
                           aria-expanded={open}
-                          className="w-full justify-between"
+                          className="w-full justify-between overflow-hidden"
                         >
-                          {field.value
-                            ? allManufacturers.find(
-                                (m) => m.id === field.value
-                              )?.name
-                            : "Select manufacturer..."}
+                          <div className="truncate">
+                            {field.value ? (
+                              allManufacturers.find((m) => m.id === field.value)?.name || 
+                              (editData?.manufacturer?.name && editData.manufacturer.id === field.value ? editData.manufacturer.name : "Select manufacturer...")
+                            ) : "Select manufacturer..."}
+                          </div>
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>

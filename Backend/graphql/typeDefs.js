@@ -7,7 +7,7 @@ export default `#graphql
     description: String
     price: Float
     category: String
-    manufacturer: ID!
+    manufacturer: Manufacturer!
     amountInStock: Int
     isLowStock: Boolean
     isCriticalStock: Boolean

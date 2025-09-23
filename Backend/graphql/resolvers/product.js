@@ -57,63 +57,91 @@ const getById = async (_p, { id }) => {
       "Invalid id: " + JSON.stringify(parsedId.error.errors)
     );
   }
-  const product = await Product.findById(id);
-
-  if (!product) {
-    throw new GraphQLError("Product not found", {
-      extensions: { code: "404_NOT_FOUND" },
-    });
+  try {
+    const product = await Product.findById(id);
+    if (!product) {
+      throw new GraphQLError("Product not found", {
+        extensions: { code: "404_NOT_FOUND" },
+      });
+    }
+    return product;
+  } catch (error) {
+    throw error instanceof GraphQLError
+      ? error
+      : new GraphQLError("Failed to get product by ID", {
+          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
+        });
   }
-
-  return product;
 };
 
 const add = async (_p, { input }) => {
   const parsed = productSchema.safeParse(input);
+
   if (!parsed.success) {
     throw new GraphQLError(
       "Validation failed: " + JSON.stringify(parsed.error.errors)
     );
   }
-  parsed.data.manufacturer = new mongoose.Types.ObjectId(
-    parsed.data.manufacturer
-  );
-  const product = await Product.create(parsed.data);
-  return product;
+  try {
+    parsed.data.manufacturer = new mongoose.Types.ObjectId(
+      parsed.data.manufacturer
+    );
+    const product = await Product.create(parsed.data);
+    return product;
+  } catch (error) {
+    throw error instanceof GraphQLError
+      ? error
+      : new GraphQLError("Failed to create product", {
+          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
+        });
+  }
 };
 
 const updateById = async (_p, { id, input }) => {
   const parsedId = idSchema.safeParse(id);
+
   if (!parsedId.success) {
     throw new GraphQLError(
       "Invalid id: " + JSON.stringify(parsedId.error.errors)
     );
   }
+
   const parsed = productSchema.partial().safeParse(input);
+
   if (!parsed.success) {
     throw new GraphQLError(
       "Validation failed: " + JSON.stringify(parsed.error.errors)
     );
   }
-  const updated = await Product.findByIdAndUpdate(id, parsed.data, {
-    runValidators: true,
-    new: true,
-  });
-  if (!updated) {
-    throw new GraphQLError("Product not found", {
-      extensions: { code: "404_NOT_FOUND" },
+  try {
+    const updated = await Product.findByIdAndUpdate(id, parsed.data, {
+      runValidators: true,
+      new: true,
     });
+    if (!updated) {
+      throw new GraphQLError("Product not found", {
+        extensions: { code: "404_NOT_FOUND" },
+      });
+    }
+    return updated;
+  } catch (error) {
+    throw error instanceof GraphQLError
+      ? error
+      : new GraphQLError("Failed to update product", {
+          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
+        });
   }
-  return updated;
 };
 
 const deleteById = async (_p, { id }) => {
   const parsedId = idSchema.safeParse(id);
+
   if (!parsedId.success) {
     throw new GraphQLError(
       "Invalid id: " + JSON.stringify(parsedId.error.errors)
     );
   }
+  
   const product = await Product.findByIdAndDelete(id);
 
   if (!product) {
@@ -126,68 +154,89 @@ const deleteById = async (_p, { id }) => {
 };
 
 const getStockValue = async (_p) => {
-  const result = await Product.aggregate([
-    {
-      $project: {
-        stockValue: {
-          $multiply: ["$price", "$amountInStock"],
+  try {
+    const result = await Product.aggregate([
+      {
+        $project: {
+          stockValue: {
+            $multiply: ["$price", "$amountInStock"],
+          },
         },
       },
-    },
-    {
-      $group: {
-        _id: null,
-        totalStockValue: { $sum: "$stockValue" },
+      {
+        $group: {
+          _id: null,
+          totalStockValue: { $sum: "$stockValue" },
+        },
       },
-    },
-  ]);
-
-  return result[0].totalStockValue || 0;
+    ]);
+    return result[0].totalStockValue || 0;
+  } catch (error) {
+    throw error instanceof GraphQLError
+      ? error
+      : new GraphQLError("Failed to retrieve total stock value", {
+          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
+        });
+  }
 };
 
 const getStockValueByManufacturer = async (_p) => {
-  const result = await Product.aggregate([
-    {
-      $group: {
-        _id: "$manufacturer",
-        totalStock: { $sum: "$amountInStock" },
-        totalStockValue: {
-          $sum: { $multiply: ["$price", "$amountInStock"] },
+  try {
+    const result = await Product.aggregate([
+      {
+        $group: {
+          _id: "$manufacturer",
+          totalStock: { $sum: "$amountInStock" },
+          totalStockValue: {
+            $sum: { $multiply: ["$price", "$amountInStock"] },
+          },
         },
       },
-    },
-    {
-      $lookup: {
-        from: "manufacturers",
-        localField: "_id",
-        foreignField: "_id",
-        as: "manufacturerInfo",
+      {
+        $lookup: {
+          from: "manufacturers",
+          localField: "_id",
+          foreignField: "_id",
+          as: "manufacturerInfo",
+        },
       },
-    },
-    {
-      $unwind: "$manufacturerInfo",
-    },
-    {
-      $project: {
-        id: "$manufacturerInfo._id",
-        name: "$manufacturerInfo.name",
-        country: "$manufacturerInfo.country",
-        website: "$manufacturerInfo.website",
-        totalStock: 1,
-        totalStockValue: 1,
+      {
+        $unwind: "$manufacturerInfo",
       },
-    },
-  ]);
-
-  return result;
+      {
+        $project: {
+          id: "$manufacturerInfo._id",
+          name: "$manufacturerInfo.name",
+          country: "$manufacturerInfo.country",
+          website: "$manufacturerInfo.website",
+          totalStock: 1,
+          totalStockValue: 1,
+        },
+      },
+    ]);
+    return result;
+  } catch (error) {
+    throw error instanceof GraphQLError
+      ? error
+      : new GraphQLError("Failed to retrieve stock value by manufacturer", {
+          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
+        });
+  }
 };
 
 const getLowStock = async (_p) => {
-  const result = await Product.aggregate([
-    { $match: { amountInStock: { $lt: 10 } } },
-  ]);
-
-  return result;
+  try {
+    const result = await Product.aggregate([
+      { $match: { amountInStock: { $lt: 10 } } },
+    ]);
+    return result;
+  } catch (error) {
+    throw error instanceof GraphQLError
+      ? error
+      : new GraphQLError("Failed to retrieve low stock", {
+          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
+        });
+  }
 };
 
 const getCriticalStock = async (_p, { page = 1, limit = 10 }) => {
@@ -239,8 +288,11 @@ const getCriticalStock = async (_p, { page = 1, limit = 10 }) => {
       hasNextPage: skip + items.length < totalCount
     };
   } catch (error) {
-    console.log("ERROOOOOR", error);
-    throw new GraphQLError("Failed to fetch critical stock");
+    throw error instanceof GraphQLError
+      ? error
+      : new GraphQLError("Failed to retrieve critical stock", {
+          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
+        });
   }
 };
 
