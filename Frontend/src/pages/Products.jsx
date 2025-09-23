@@ -203,9 +203,9 @@ export default function Products() {
               >
                 <div className="flex justify-between gap-1">
                   <div className="font-semibold truncate">{product.name}</div>
-                  <Badge variant="outline" className="text-[.65rem]">
+                  {product.category && <Badge variant="outline" className="text-[.65rem]">
                     {product.category}
-                  </Badge>
+                  </Badge>}
                 </div>
                 <div className="text-gray-400 text-[.6rem] mb-1">
                   {product.sku}

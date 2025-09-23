@@ -1,12 +1,15 @@
 import mongoose from "mongoose";
-import { GraphQLError } from "graphql";
 import Product from "../../models/Product.js";
 import { z } from "zod";
 import { productSchema } from "../../validation/product.schema.js";
+import { GQLError, zodToBadInput } from "../../utils/errors.js";
 
 const idSchema = z.string().length(24, "Invalid id format");
 
-const getAll = async (_p, { page = 1, limit = 10, sortBy = "NAME_ASC", search }) => {
+const getAll = async (
+  _p,
+  { page = 1, limit = 10, sortBy = "NAME_ASC", search }
+) => {
   const skip = (page - 1) * limit;
   let sort = {};
 
@@ -38,50 +41,42 @@ const getAll = async (_p, { page = 1, limit = 10, sortBy = "NAME_ASC", search })
     filter.name = { $regex: search, $options: "i" };
   }
 
-  const [items, totalCount] = await Promise.all([
-    Product.find(filter).sort(sort).skip(skip).limit(limit),
-    Product.countDocuments(filter)
-  ]);
+  try {
+    const [items, totalCount] = await Promise.all([
+      Product.find(filter).sort(sort).skip(skip).limit(limit),
+      Product.countDocuments(filter),
+    ]);
 
-  return {
-    items,
-    totalCount,
-    hasNextPage: skip + items.length < totalCount
-  };
+    return {
+      items,
+      totalCount,
+      hasNextPage: skip + items.length < totalCount,
+    };
+  } catch (error) {
+    throw GQLError.internal("Failed to retrieve products");
+  }
 };
 
 const getById = async (_p, { id }) => {
+  // Validate ID
   const parsedId = idSchema.safeParse(id);
-  if (!parsedId.success) {
-    throw new GraphQLError(
-      "Invalid id: " + JSON.stringify(parsedId.error.errors)
-    );
-  }
+  if (!parsedId.success) throw zodToBadInput("Invalid id", parsedId.error);
+
   try {
     const product = await Product.findById(id);
-    if (!product) {
-      throw new GraphQLError("Product not found", {
-        extensions: { code: "404_NOT_FOUND" },
-      });
-    }
+    if (!product) throw GQLError.notFound("Product not found");
+
     return product;
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to get product by ID", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to get product by ID");
   }
 };
 
 const add = async (_p, { input }) => {
+  // Validate input
   const parsed = productSchema.safeParse(input);
+  if (!parsed.success) throw zodToBadInput("Product validation failed", parsed.error);
 
-  if (!parsed.success) {
-    throw new GraphQLError(
-      "Validation failed: " + JSON.stringify(parsed.error.errors)
-    );
-  }
   try {
     parsed.data.manufacturer = new mongoose.Types.ObjectId(
       parsed.data.manufacturer
@@ -89,68 +84,44 @@ const add = async (_p, { input }) => {
     const product = await Product.create(parsed.data);
     return product;
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to create product", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to create product");
   }
 };
 
 const updateById = async (_p, { id, input }) => {
+  // Validate ID
   const parsedId = idSchema.safeParse(id);
-
-  if (!parsedId.success) {
-    throw new GraphQLError(
-      "Invalid id: " + JSON.stringify(parsedId.error.errors)
-    );
-  }
+  if (!parsedId.success) throw zodToBadInput("Invalid id", parsedId.error);
 
   const parsed = productSchema.partial().safeParse(input);
-
-  if (!parsed.success) {
-    throw new GraphQLError(
-      "Validation failed: " + JSON.stringify(parsed.error.errors)
-    );
-  }
+  if (!parsed.success) throw zodToBadInput("Product validation failed", parsed.error);
   try {
     const updated = await Product.findByIdAndUpdate(id, parsed.data, {
       runValidators: true,
       new: true,
     });
-    if (!updated) {
-      throw new GraphQLError("Product not found", {
-        extensions: { code: "404_NOT_FOUND" },
-      });
-    }
+
+    if (!updated) throw GQLError.notFound("Product not found");
     return updated;
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to update product", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to update product");
   }
 };
 
 const deleteById = async (_p, { id }) => {
+  // Validate ID
   const parsedId = idSchema.safeParse(id);
+  if (!parsedId.success) throw zodToBadInput("Invalid id", parsedId.error);
 
-  if (!parsedId.success) {
-    throw new GraphQLError(
-      "Invalid id: " + JSON.stringify(parsedId.error.errors)
-    );
+  try {
+    const product = await Product.findByIdAndDelete(id);
+
+    if (!product) throw GQLError.notFound("Product not found");
+
+    return product;
+  } catch (error) {
+    throw GQLError.internal("Failed to delete product");
   }
-  
-  const product = await Product.findByIdAndDelete(id);
-
-  if (!product) {
-    throw new GraphQLError("Product not found", {
-      extensions: { code: "404_NOT_FOUND" },
-    });
-  }
-
-  return product;
 };
 
 const getStockValue = async (_p) => {
@@ -172,11 +143,7 @@ const getStockValue = async (_p) => {
     ]);
     return result[0].totalStockValue || 0;
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to retrieve total stock value", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to retrieve total stock value");
   }
 };
 
@@ -216,11 +183,7 @@ const getStockValueByManufacturer = async (_p) => {
     ]);
     return result;
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to retrieve stock value by manufacturer", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to retrieve stock value by manufacturer");
   }
 };
 
@@ -231,11 +194,7 @@ const getLowStock = async (_p) => {
     ]);
     return result;
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to retrieve low stock", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to retrieve low stock");
   }
 };
 
@@ -285,14 +244,10 @@ const getCriticalStock = async (_p, { page = 1, limit = 10 }) => {
     return {
       items,
       totalCount,
-      hasNextPage: skip + items.length < totalCount
+      hasNextPage: skip + items.length < totalCount,
     };
   } catch (error) {
-    throw error instanceof GraphQLError
-      ? error
-      : new GraphQLError("Failed to retrieve critical stock", {
-          extensions: { code: "500_INTERNAL_SERVER_ERROR" },
-        });
+    throw GQLError.internal("Failed to retrieve critical stock");
   }
 };
 
@@ -305,5 +260,5 @@ export default {
   getLowStock,
   getCriticalStock,
   getStockValue,
-  getStockValueByManufacturer
+  getStockValueByManufacturer,
 };
