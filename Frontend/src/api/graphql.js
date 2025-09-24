@@ -61,7 +61,7 @@ export const SEARCH_PRODUCTS = gql`
 
 export const GET_CRITICAL_STOCK = gql`
     query GetCriticalStock($page: Int, $limit: Int) {
-      productCriticalStock(page: $page, limit: $limit) {
+      criticalStockProducts(page: $page, limit: $limit) {
         items {
           id
           name
@@ -116,6 +116,19 @@ export const UPDATE_PRODUCT = gql`
     }
   }
 `;
+
+export const STOCK_VALUE_MANUFACTURER = gql`
+  query GetStockValueByManufacturer($limit: Int) {
+    totalStockValueByManufacturer(limit: $limit) {
+      items {
+        id
+        name
+        totalStock
+        totalStockValue
+      }
+    }
+  }
+`
 
 export const GET_MANUFACTURERS = gql`
   query GetManufacturers($page: Int, $limit: Int, $search: String) {

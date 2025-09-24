@@ -2,7 +2,7 @@
 
 ## Queries
 
-### products
+### products (paginated)
 
 ```graphql
 query GetProducts {
@@ -44,21 +44,26 @@ query GetProduct {
 
 ```graphql
 query GetTotalStockValue {
-  stockValue
+  totalStockValue
 }
 ```
 
-### totalStockValueByManufacturer
+
+### totalStockValueByManufacturer (paginated)
 
 ```graphql
 query GetStockValueByManufacturer {
-  stockValueByManufacturer {
-    id
-    name
-    website
-    country
-    totalStock
-    totalStockValue
+  totalStockValueByManufacturer(limit: 10, page: 1) {
+    items {
+      id
+      name
+      website
+      country
+      totalStock
+      totalStockValue
+    }
+    totalCount
+    hasNextPage
   }
 }
 ```
@@ -67,7 +72,7 @@ query GetStockValueByManufacturer {
 
 ```graphql
 query GetLowStock {
-  productLowStock {
+  lowStockProducts {
     id
     name
     amountInStock
@@ -79,7 +84,7 @@ query GetLowStock {
 
 ```graphql
 query GetProductCriticalStock {
-  productCriticalStock(limit: 10, page: 1) {
+  criticalStockProducts(limit: 10, page: 1) {
     items {
       id
       name
@@ -99,7 +104,8 @@ query GetProductCriticalStock {
 }
 ```
 
-### manufacturers
+
+### manufacturers (paginated)
 
 ```graphql
 query GetManufacturers {

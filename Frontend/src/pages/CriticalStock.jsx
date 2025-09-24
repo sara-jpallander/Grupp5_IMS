@@ -17,7 +17,7 @@ export default function CriticalStock() {
     variables: { page, limit },
   });
 
-  const productsPage = data?.productCriticalStock || {};
+  const productsPage = data?.criticalStockProducts || {};
   const products = productsPage.items || [];
   const totalCount = productsPage.totalCount || 0;
   const hasNextPage = productsPage.hasNextPage || false;

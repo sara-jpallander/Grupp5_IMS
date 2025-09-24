@@ -10,3 +10,9 @@ export const getStockStatusColor = (value) => {
   else if (value < 10) return "text-yellow-600";
   else return "text-emerald-600";
 };
+
+export const formatCurrency = new Intl.NumberFormat("en-US", {
+  style: "currency",
+  currency: "USD",
+  trailingZeroDisplay: "stripIfInteger",
+});

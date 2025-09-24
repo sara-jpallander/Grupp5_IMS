@@ -116,6 +116,12 @@ export default `#graphql
     totalStock: Int
     totalStockValue: Float
   }
+
+  type StockValueByManufacturerPage {
+    items: [StockValueByManufacturer!]!
+    totalCount: Int!
+    hasNextPage: Boolean!
+  }
   
   enum ProductSortOption {
     NAME_ASC
@@ -128,10 +134,10 @@ export default `#graphql
   type Query {
     products(page: Int = 1, limit: Int = 10, sortBy: ProductSortOption = NAME_ASC, search: String): ProductPage!
     product(id: ID!): Product
-    stockValue: Float
-    stockValueByManufacturer: [StockValueByManufacturer]
-    productLowStock: [Product]
-    productCriticalStock(page: Int = 1, limit: Int = 10): CriticalProductPage!
+    totalStockValue: Float
+    totalStockValueByManufacturer(page: Int = 1, limit: Int = 0): StockValueByManufacturerPage!
+    lowStockProducts: [Product]
+    criticalStockProducts(page: Int = 1, limit: Int = 10): CriticalProductPage!
 
     manufacturers(page: Int = 1, limit: Int = 10, search: String): ManufacturerPage!
     manufacturer(id: ID!): Manufacturer

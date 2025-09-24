@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import CreateProductDialog from "@/components/dialogs/CreateProductDialog";
 import ViewProductDialog from "@/components/dialogs/ViewProductDialog";
 import LoadingText from "@/components/LoadingText";
-import { getStockStatusColor } from "@/lib/utils";
+import { getStockStatusColor, formatCurrency } from "@/lib/utils";
 
 export default function Products() {
   const [page, setPage] = useState(1);
@@ -220,7 +220,7 @@ export default function Products() {
                   {product.description}
                 </div>
                 <div className="flex justify-between gap-2 pt-4 mt-auto text-[.8rem] font-bold">
-                  <div>${product.price}</div>
+                  <div>{formatCurrency.format(product.price)}</div>
                   <div
                     className={clsx(
                       "",

@@ -42,15 +42,21 @@ const getAll = async (
   }
 
   try {
+    let query = Product.find(filter).sort(sort);
+
+    if (limit > 0) {
+      query = query.skip(skip).limit(limit);
+    }
+
     const [items, totalCount] = await Promise.all([
-      Product.find(filter).sort(sort).skip(skip).limit(limit),
+      query,
       Product.countDocuments(filter),
     ]);
 
     return {
       items,
       totalCount,
-      hasNextPage: skip + items.length < totalCount,
+      hasNextPage: limit > 0 ? skip + items.length < totalCount : false,
     };
   } catch (error) {
     throw GQLError.internal("Failed to retrieve products");
@@ -147,9 +153,10 @@ const getStockValue = async (_p) => {
   }
 };
 
-const getStockValueByManufacturer = async (_p) => {
+const getStockValueByManufacturer = async (_p, { page = 1, limit = 0 }) => {
+  const skip = (page - 1) * limit;
   try {
-    const result = await Product.aggregate([
+    const basePipeline = [
       {
         $group: {
           _id: "$manufacturer",
@@ -159,6 +166,7 @@ const getStockValueByManufacturer = async (_p) => {
           },
         },
       },
+      { $sort: { totalStockValue: -1 } },
       {
         $lookup: {
           from: "manufacturers",
@@ -180,8 +188,30 @@ const getStockValueByManufacturer = async (_p) => {
           totalStockValue: 1,
         },
       },
-    ]);
-    return result;
+    ];
+
+    // Get all results for totalCount
+    const allResults = await Product.aggregate(basePipeline);
+    const totalCount = allResults.length;
+
+    // Add pagination if limit > 0
+    let items;
+    if (limit > 0) {
+      const paginatedPipeline = [
+        ...basePipeline,
+        { $skip: skip },
+        { $limit: limit }
+      ];
+      items = await Product.aggregate(paginatedPipeline);
+    } else {
+      items = allResults;
+    }
+
+    return {
+      items,
+      totalCount,
+      hasNextPage: skip + items.length < totalCount,
+    };
   } catch (error) {
     throw GQLError.internal("Failed to retrieve stock value by manufacturer");
   }
@@ -201,8 +231,7 @@ const getLowStock = async (_p) => {
 const getCriticalStock = async (_p, { page = 1, limit = 10 }) => {
   try {
     const skip = (page - 1) * limit;
-    // Get all critical stock products
-    const all = await Product.aggregate([
+    const basePipeline = [
       { $match: { amountInStock: { $lt: 5 } } },
       {
         $lookup: {
@@ -238,13 +267,26 @@ const getCriticalStock = async (_p, { page = 1, limit = 10 }) => {
           },
         },
       },
-    ]);
-    const totalCount = all.length;
-    const items = all.slice(skip, skip + limit);
+    ];
+
+    let items;
+    if (limit > 0) {
+      const paginatedPipeline = [
+        ...basePipeline,
+        { $skip: skip },
+        { $limit: limit }
+      ];
+      items = await Product.aggregate(paginatedPipeline);
+    } else {
+      items = await Product.aggregate(basePipeline);
+    }
+
+    const totalCount = await Product.countDocuments({ amountInStock: { $lt: 5 } });
+
     return {
       items,
       totalCount,
-      hasNextPage: skip + items.length < totalCount,
+      hasNextPage: limit > 0 ? skip + items.length < totalCount : false,
     };
   } catch (error) {
     throw GQLError.internal("Failed to retrieve critical stock");
