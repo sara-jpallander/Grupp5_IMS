@@ -33,17 +33,28 @@ const add = async (_p, { input }) => {
   // Validate nested contact
   const contactParsed = contactSchema.safeParse(input.contact);
   if (!contactParsed.success) {
-    throw new GraphQLError(
-      "Contact validation failed: " + JSON.stringify(contactParsed.error.errors)
-    );
+    const issues = contactParsed.error?.issues || [];
+    const firstIssueMsg =
+      issues.length > 0 ? issues[0].message : "Contact validation failed";
+    throw new GraphQLError(firstIssueMsg, {
+      extensions: {
+        code: "BAD_USER_INPUT",
+        issues,
+      },
+    });
   }
   // Validate manufacturer
   const manufacturerParsed = manufacturerSchema.safeParse(input);
   if (!manufacturerParsed.success) {
-    throw new GraphQLError(
-      "Manufacturer validation failed: " +
-        JSON.stringify(manufacturerParsed.error.errors)
-    );
+    const issues = manufacturerParsed.error?.issues || [];
+    const firstIssueMsg =
+      issues.length > 0 ? issues[0].message : "Manufacturer validation failed";
+    throw new GraphQLError(firstIssueMsg, {
+      extensions: {
+        code: "BAD_USER_INPUT",
+        issues,
+      },
+    });
   }
   const contact = await Contact.create(contactParsed.data);
   let manufacturer = await Manufacturer.create({
