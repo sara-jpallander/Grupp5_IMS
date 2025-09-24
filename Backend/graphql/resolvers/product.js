@@ -8,7 +8,7 @@ const idSchema = z.string().length(24, "Invalid id format");
 
 const getAll = async (
   _p,
-  { page = 1, limit = 10, sortBy = "NAME_ASC", search }
+  { page = 1, limit = 0, sortBy = "NAME_ASC", search }
 ) => {
   const skip = (page - 1) * limit;
   let sort = {};
@@ -155,6 +155,7 @@ const getStockValue = async (_p) => {
 
 const getStockValueByManufacturer = async (_p, { page = 1, limit = 0 }) => {
   const skip = (page - 1) * limit;
+  
   try {
     const basePipeline = [
       {
@@ -228,7 +229,7 @@ const getLowStock = async (_p) => {
   }
 };
 
-const getCriticalStock = async (_p, { page = 1, limit = 10 }) => {
+const getCriticalStock = async (_p, { page = 1, limit = 0 }) => {
   try {
     const skip = (page - 1) * limit;
     const basePipeline = [

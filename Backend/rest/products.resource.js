@@ -40,11 +40,59 @@ async function createProduct(req, res) {
 
 //GET ALL
 async function getAllProducts(req, res) {
-  try {
-    /* TODO: ska man fixa filter med regexp här? */
-    const products = await Product.find();
+  const search = req.query.search || "";
+  const sortBy = req.query.sortBy || "";
+  const limit = Number(req.query.limit) || 0;
+  const page = Number(req.query.page) || 1;
+  const skip = (page - 1) * limit;
+  let sort = {};
 
-    res.status(200).json({ message: "All products: ", data: products });
+  // Sorting options
+  switch (sortBy) {
+    case "NAME_ASC":
+      sort = { name: 1 };
+      break;
+    case "PRICE_ASC":
+      sort = { price: 1 };
+      break;
+    case "PRICE_DESC":
+      sort = { price: -1 };
+      break;
+    case "STOCK_ASC":
+      sort = { amountInStock: 1 };
+      break;
+    case "STOCK_DESC":
+      sort = { amountInStock: -1 };
+      break;
+    default:
+      sort = { name: 1 };
+  }
+
+  const filter = {};
+
+  // Filter by search term
+  if (search && search.trim() !== "") {
+    filter.name = { $regex: search, $options: "i" };
+  }
+
+  try {
+    let query = Product.find(filter).sort(sort);
+
+    if (limit > 0) {
+      query = query.skip(skip).limit(limit);
+    }
+
+    const [items, totalCount] = await Promise.all([
+      query,
+      Product.countDocuments(filter),
+    ]);
+
+    res.status(200).json({
+      message: "All products: ",
+      data: items,
+      totalCount,
+      hasNextPage: limit > 0 ? skip + items.length < totalCount : false,
+    });
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch products: ", error });
   }
@@ -159,8 +207,12 @@ async function getTotalStockValue(req, res) {
 }
 
 async function getTotalStockValueByManufacturer(req, res) {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 0;
+  const skip = (page - 1) * limit;
+
   try {
-    const result = await Product.aggregate([
+    const basePipeline = [
       {
         $group: {
           _id: "$manufacturer",
@@ -192,9 +244,32 @@ async function getTotalStockValueByManufacturer(req, res) {
           totalStockValue: 1,
         },
       },
-    ]);
+    ];
 
-    res.status(200).json({ data: result });
+    // Get all results for totalCount
+    const allResults = await Product.aggregate(basePipeline);
+    const totalCount = allResults.length;
+
+    // Add pagination if limit > 0
+    let items;
+    if (limit > 0) {
+      const paginatedPipeline = [
+        ...basePipeline,
+        { $skip: skip },
+        { $limit: limit },
+      ];
+      items = await Product.aggregate(paginatedPipeline);
+    } else {
+      items = allResults;
+    }
+
+    res.status(200).json({
+      data: {
+        items,
+        totalCount,
+        hasNextPage: skip + items.length < totalCount,
+      },
+    });
   } catch (error) {
     res.status(500).json({
       message:
@@ -220,8 +295,12 @@ async function getLowStock(req, res) {
 }
 
 async function getCriticalStock(req, res) {
+  const page = Number(req.query.page) || 1;
+  const limit = Number(req.query.limit) || 0;
+  const skip = (page - 1) * limit;
+
   try {
-    const result = await Product.aggregate([
+    const basePipeline = [
       { $match: { amountInStock: { $lt: 5 } } },
       {
         $lookup: {
@@ -255,9 +334,31 @@ async function getCriticalStock(req, res) {
           },
         },
       },
-    ]);
+    ];
 
-    res.status(200).json({ data: result });
+    let items;
+    if (limit > 0) {
+      const paginatedPipeline = [
+        ...basePipeline,
+        { $skip: skip },
+        { $limit: limit },
+      ];
+      items = await Product.aggregate(paginatedPipeline);
+    } else {
+      items = await Product.aggregate(basePipeline);
+    }
+
+    const totalCount = await Product.countDocuments({
+      amountInStock: { $lt: 5 },
+    });
+
+    res.status(200).json({
+      data: {
+        items,
+        totalCount,
+        hasNextPage: limit > 0 ? skip + items.length < totalCount : false,
+      },
+    });
   } catch (error) {
     res.status(500).json({
       message: "Internal server error. Failed to retrieve critical stock.",

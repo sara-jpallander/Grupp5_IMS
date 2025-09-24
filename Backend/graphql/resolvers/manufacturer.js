@@ -8,7 +8,7 @@ import { GQLError, zodToBadInput } from "../../utils/errors.js";
 
 const idSchema = z.string().length(24, "Invalid id format");
 
-const getAll = async (_p, { page = 1, limit = 10, search }) => {
+const getAll = async (_p, { page = 1, limit = 0, search }) => {
   try {
     const skip = (page - 1) * limit;
 
