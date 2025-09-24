@@ -3,7 +3,7 @@ import { useQuery } from "@apollo/client/react";
 import DialogWrapper from "./DialogWrapper";
 import InfoTable from "../InfoTable";
 import { Badge } from "../ui/badge";
-import { getStockStatusColor } from "@/lib/utils";
+import { formatCurrency, getStockStatusColor } from "@/lib/utils";
 import LoadingText from "../LoadingText";
 import { GET_PRODUCT_WITH_MANUFACTURER } from "@/api/graphql";
 
@@ -21,7 +21,7 @@ export default function ViewProductDialog({ isOpen, onClose, data }) {
   const productInfo = [
     { label: "Name", value: product?.name },
     { label: "SKU", value: product?.sku },
-    { label: "Price", value: `$${product?.price}` },
+    { label: "Price", value: formatCurrency.format(product.price) },
     { label: "Category", value: product?.category },
     { label: "Description", value: product?.description },
   ];

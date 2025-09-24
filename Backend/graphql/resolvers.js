@@ -6,10 +6,10 @@ import Manufacturer from "../models/Manufacturer.js";
 export default {
   Query: {
     products: product.getAll,
-    productLowStock: product.getLowStock,
-    productCriticalStock: product.getCriticalStock,
-    stockValue: product.getStockValue,
-    stockValueByManufacturer: product.getStockValueByManufacturer,
+    lowStockProducts: product.getLowStock,
+    criticalStockProducts: product.getCriticalStock,
+    totalStockValue: product.getStockValue,
+    totalStockValueByManufacturer: product.getStockValueByManufacturer,
     product: product.getById,
     manufacturers: manufacturer.getAll,
     manufacturer: manufacturer.getById,
@@ -35,7 +35,7 @@ export default {
     isCriticalStock: (doc) => (doc.amountInStock < 5 ? true : false),
     manufacturer: async (doc) => {
       if (!doc.manufacturer) return null;
-      return await Manufacturer.findById(doc.manufacturer).populate('contact');
+      return await Manufacturer.findById(doc.manufacturer).populate("contact");
     },
   },
 
